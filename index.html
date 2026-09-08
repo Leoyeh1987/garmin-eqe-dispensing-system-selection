@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garmin EQE  點膠選型系統</title>
+<style>
+:root{
+  --ink:#111111; --text:#1f1f1f; --text2:#6e6e6e; --line:#d9d9d9; --line2:#e8e8e8;
+  --bg:#f4f4f4; --card:#ffffff; --soft:#f7f7f7; --soft2:#efefef;
+  --ok:#1e7e34; --ok-bg:#e7f3ea; --warn:#8a5a00; --warn-bg:#fdf1de; --ng:#c62828; --ng-bg:#fbe7e7;
+  --radius:2px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;color:var(--text);background:var(--bg);font-size:16px;line-height:1.55}
+
+/* ===== 黑色頂欄（GARMIN UI） ===== */
+.topbar{background:#000;color:#fff;position:sticky;top:0;z-index:50}
+.topbar-inner{max-width:1280px;margin:0 auto;padding:18px 24px 20px}
+.brand-row{margin-bottom:12px}
+.brand{font-size:13px;font-weight:300;letter-spacing:6px;color:#cfcfcf;white-space:nowrap}
+.title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.title-block h1{font-size:28px;font-weight:800;color:#fff;letter-spacing:.5px;display:flex;align-items:baseline;gap:10px}
+.ver{font-size:13px;font-weight:400;color:#8a8a8a;letter-spacing:1px;white-space:nowrap}
+.subtitle{font-size:13px;color:#999;margin-top:5px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab-btn{border:1px solid #555;background:transparent;font-size:14px;font-weight:500;color:#bbb;padding:9px 20px;cursor:pointer;min-height:42px;border-radius:var(--radius)}
+.tab-btn:hover{color:#fff;border-color:#999}
+.tab-btn.active{background:#fff;border-color:#fff;color:#000;font-weight:700}
+
+.wrap{max-width:1280px;margin:0 auto;padding:22px 24px 30px}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-bottom:18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card h2{font-size:16px;font-weight:700;margin-bottom:4px;letter-spacing:.5px}
+.card h2 .step{font-size:11.5px;font-weight:600;color:var(--text2);background:var(--soft2);border-radius:var(--radius);padding:2px 8px;white-space:nowrap;letter-spacing:1px}
+.hint{font-size:13px;color:var(--text2);margin-bottom:14px}
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+
+/* ===== 選型版面：左 360px 條件面板 + 右結果區 ===== */
+.select-layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:20px;align-items:start}
+.side{position:sticky;top:168px;margin-bottom:0}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;letter-spacing:.3px}
+.field .sub{font-weight:400;color:var(--text2)}
+.field-hint{font-size:12px;color:var(--warn);margin-top:5px;min-height:0}
+select,input[type=number],input[type=text]{width:100%;padding:9px 11px;font-size:14.5px;border:1px solid #c9c9c9;border-radius:var(--radius);background:var(--card);color:var(--text);min-height:42px}
+select:focus,input:focus{outline:2px solid var(--ink);outline-offset:0;border-color:var(--ink)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid #c9c9c9;background:var(--card);border-radius:var(--radius);padding:8px 14px;font-size:13.5px;color:var(--text);cursor:pointer;min-height:38px}
+.seg button:hover{background:var(--soft)}
+.seg button.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--ink);border-radius:var(--radius);padding:11px 20px;font-size:14.5px;font-weight:600;cursor:pointer;min-height:44px;letter-spacing:.5px}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{background:#333}
+.btn-ghost{background:var(--card);border-color:#c9c9c9;color:var(--text)}
+.btn-ghost:hover{background:var(--soft)}
+.btn-block{width:100%;margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid #c9c9c9;background:var(--card);border-radius:var(--radius);padding:6px 12px;font-size:13px;cursor:pointer;min-height:34px}
+.chip:hover{border-color:var(--ink);background:var(--soft)}
+
+/* ===== 狀態（僅 OK / Warning / NG 使用顏色） ===== */
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.d-red{background:var(--ng)}.d-orange{background:#e08a00}.d-green{background:var(--ok)}.d-gray{background:#9e9e9e}
+.badge{display:inline-block;font-size:12px;font-weight:600;border-radius:var(--radius);padding:2px 8px;white-space:nowrap}
+.b-green{background:var(--ok-bg);color:var(--ok)}
+.b-orange{background:var(--warn-bg);color:var(--warn)}
+.b-red{background:var(--ng-bg);color:var(--ng)}
+.b-gray{background:var(--soft2);color:var(--text2)}
+.b-dark{background:var(--ink);color:#fff}
+.warn-box{border-radius:var(--radius);padding:11px 14px;font-size:13.5px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;border:1px solid}
+.warn-box .dot{margin-top:5px}
+.warn-red{background:var(--ng-bg);color:#7a1f1f;border-color:#eec5c5}
+.warn-orange{background:var(--warn-bg);color:#6b4a12;border-color:#eed9b0}
+.warn-green{background:var(--ok-bg);color:#1e5c33;border-color:#c4ddcd}
+.warn-blue{background:var(--soft);color:#444;border-color:var(--line)}
+
+/* ===== 指標卡 ===== */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.m-label{font-size:12px;color:var(--text2);letter-spacing:1px;margin-bottom:4px}
+.m-value{font-size:22px;font-weight:700;line-height:1.25}
+.m-value.m-sm{font-size:16px;padding-top:4px}
+.m-value.m-status{display:flex;align-items:center;gap:8px;font-size:18px;padding-top:2px}
+
+/* ===== 結果卡 ===== */
+.result-card{border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;background:var(--card)}
+.result-card.top1{border-color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.rc-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.rc-head .rank{width:26px;height:26px;border-radius:50%;background:var(--soft2);color:var(--text2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none}
+.top1 .rank{background:var(--ink);color:#fff}
+.rc-head h3{font-size:16px;font-weight:700}
+.score-bar{height:5px;background:var(--soft2);overflow:hidden;margin:6px 0 10px}
+.score-bar i{display:block;height:100%;background:var(--ink)}
+.rc-meta{font-size:13px;color:var(--text2);margin-bottom:8px}
+.rc-reasons{font-size:13.5px}
+.rc-reasons li{margin-left:20px;margin-bottom:3px}
+
+/* ===== 表格 ===== */
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card)}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line2);vertical-align:top}
+th{background:var(--soft);font-weight:600;font-size:12.5px;color:var(--text2);white-space:nowrap;position:sticky;top:0;letter-spacing:.5px}
+.table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);max-height:560px;overflow-y:auto}
+tr:hover td{background:var(--soft)}
+.db-nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.db-nav button{border:1px solid #c9c9c9;background:var(--card);border-radius:var(--radius);padding:7px 13px;font-size:13px;cursor:pointer;color:var(--text);min-height:36px}
+.db-nav button:hover{background:var(--soft)}
+.db-nav button.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+.search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search-row input{flex:1;min-width:220px}
+
+/* ===== 其他 ===== */
+.kv{font-size:13px;color:var(--text2)}
+.kv b{color:var(--text)}
+.section-title{font-size:14px;font-weight:700;margin:18px 0 8px;letter-spacing:.5px}
+.checklist-item{display:flex;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:8px;background:var(--card);align-items:flex-start}
+.checklist-item input{width:18px;height:18px;margin-top:3px;flex:none;min-height:0;accent-color:var(--ink)}
+.checklist-item .ci-body{font-size:13.5px}
+.checklist-item.checked{background:var(--ok-bg);border-color:#c4ddcd}
+.progress-line{display:flex;align-items:center;gap:12px;margin-bottom:14px;font-size:13.5px}
+.progress-track{flex:1;height:7px;background:var(--soft2);overflow:hidden}
+.progress-track i{display:block;height:100%;background:var(--ok)}
+.calc-out{background:var(--soft);border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px;font-size:14px;margin-top:12px}
+.calc-out b{font-size:16px}
+.calc-out table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.calc-out th,.calc-out td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}
+.calc-out th{font-weight:600;color:var(--muted)}
+.calc-out .sec{font-weight:700;margin-top:12px;margin-bottom:4px;font-size:13.5px}
+.cd-help{margin-top:10px;font-size:13px;color:var(--muted)}
+.cd-help summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.cd-help table{width:100%;border-collapse:collapse;margin:8px 0}
+.cd-help th,.cd-help td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+.cd-help p{margin:6px 0}
+.test-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line2);font-size:13.5px}
+.test-row:last-child{border-bottom:none}
+.pass,.fail{display:inline-flex;align-items:center;gap:7px;font-weight:700;min-width:74px;letter-spacing:.5px}
+.pass{color:var(--ok)}
+.fail{color:var(--ng)}
+.pill-count{font-size:12.5px;color:var(--text2)}
+.empty{color:var(--text2);font-size:14px;padding:24px;text-align:center}
+
+
+/* ===== DFA v3 (simple) ===== */
+.dfa-top{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.dfa-top .field{flex:1;min-width:240px;margin:0}
+.dfa-gate{display:flex;align-items:center;gap:16px;border:1px solid var(--line);border-left-width:6px;padding:14px 18px;margin-bottom:14px}
+.dfa-gate .g-title{font-size:20px;font-weight:800;white-space:nowrap}
+.dfa-gate .g-sub{font-size:13.5px;color:var(--text2)}
+.dfa-gate.pass{border-left-color:var(--ok);background:var(--ok-bg)}.dfa-gate.pass .g-title{color:#1e5c33}
+.dfa-gate.ng{border-left-color:var(--ng);background:var(--ng-bg)}.dfa-gate.ng .g-title{color:#7a1f1f}
+.dfa-gate.pending{border-left-color:#888;background:var(--soft)}
+.dfa-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.dfa-cat{font-size:13px;font-weight:700;color:var(--text2);letter-spacing:1px;margin:18px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.dfa-row{display:flex;align-items:center;gap:12px;border:1px solid var(--line);background:#fff;padding:12px 14px;margin-bottom:8px}
+.dfa-row .r-main{flex:1;min-width:0}
+.dfa-row .r-name{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dfa-row .r-basis{font-size:13px;color:var(--text2);margin-top:3px}
+.dfa-row .r-act{display:flex;gap:6px;flex:none}
+.dfa-row .r-act button{border:1px solid #c9c9c9;background:#fff;border-radius:2px;padding:7px 12px;min-height:36px;font-size:13px;cursor:pointer;white-space:nowrap}
+.dfa-row .r-act button.on[data-v="pass"]{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700}
+.dfa-row .r-act button.on[data-v="issue"]{background:var(--ng);border-color:var(--ng);color:#fff;font-weight:700}
+.dfa-row .r-act button.on[data-v="na"]{background:#777;border-color:#777;color:#fff;font-weight:700}
+.dfa-row[data-state="pass"]{border-left:4px solid var(--ok)}
+.dfa-row[data-state="issue"]{border-left:4px solid var(--ng);background:#fffafa}
+.dfa-row[data-state="na"]{border-left:4px solid #bbb;opacity:.7}
+.dfa-row.soft{background:var(--soft)}
+.dfa-fix{width:100%;margin-top:8px;min-height:36px!important;padding:6px 9px!important;font-size:12.5px!important}
+.dfa-issues{margin-top:10px;font-size:13.5px}
+.dfa-issues li{margin-left:20px;margin-bottom:3px}
+@media(max-width:760px){.dfa-row{flex-direction:column;align-items:stretch}.dfa-row .r-act{justify-content:stretch}.dfa-row .r-act button{flex:1}.dfa-gate{flex-direction:column;align-items:flex-start;gap:6px}}
+
+/* ===== RWD ===== */
+@media(max-width:1100px){.metrics{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:960px){
+  .select-layout{grid-template-columns:1fr}
+  .side{position:static}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .wrap{padding:16px}
+  .card{padding:16px}
+  .title-block h1{font-size:22px}
+  .tab-btn{min-height:44px}
+  .brand{letter-spacing:4px}
+}
+@media print{
+  .topbar,.btn,.chips,.db-nav,.search-row,#btn-dfa-clear{display:none!important}
+  body{background:#fff}
+  .card{border:none;box-shadow:none;padding:8px 0}
+  .select-layout{display:block}
+  .side{position:static}
+  .metrics{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand-row"><span class="brand">GARMIN EQE</span></div>
+    <div class="title-row">
+      <div class="title-block">
+        <h1>點膠選型系統<span class="ver">v1.0</span></h1>
+        <p class="subtitle">膠閥 × 針頭 × 供料系統 快速選型。</p>
+      </div>
+      <nav class="tabs" id="tabs">
+        <button class="tab-btn active" data-tab="select">選型系統</button>
+        <button class="tab-btn" data-tab="db">資料庫系統</button>
+        <button class="tab-btn" data-tab="calc">工程計算</button>
+        <button class="tab-btn" data-tab="dfa">DFA 檢核</button>
+      </nav>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+
+<!-- ============ 選型系統 ============ -->
+<section class="panel active" id="panel-select">
+  <div class="select-layout">
+    <aside class="card side">
+      <h2>選型條件</h2>
+      <p class="hint">流程：情境 → 膠材 → 製程條件 → 硬排除 → 評分 → 針頭／供料／HS 建議。輸入越完整，推薦越準確。</p>
+      <div class="field">
+        <label>應用情境</label>
+        <select id="inp-scenario"><option value="">不指定</option></select>
+      </div>
+      <div class="field">
+        <label>膠材家族</label>
+        <select id="inp-family"><option value="">不指定（依情境自動縮小）</option></select>
+        <div class="field-hint" id="family-hint"></div>
+      </div>
+      <div class="field">
+        <label>單液／雙液 <span class="sub">雙液僅限 AB 閥體＋靜態混合管</span></label>
+        <div class="seg" id="seg-mix">
+          <button data-v="single" class="on">單液</button>
+          <button data-v="dual">雙液（AB）</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>工作黏度 <span class="sub">cps</span></label>
+        <input type="number" id="inp-visc" min="1" placeholder="例：50000">
+      </div>
+      <div class="field">
+        <label>出膠壓力 <span class="sub">bar（選填，用於滴漏風險判定）</span></label>
+        <input type="number" id="inp-pressure" min="0" step="0.1" placeholder="例：3">
+      </div>
+      <div class="field">
+        <label>目標膠量誤差 <span class="sub">±%（選填，用於閥體精度評估）</span></label>
+        <input type="number" id="inp-tol" min="0.1" step="0.5" placeholder="例：5">
+      </div>
+      <div class="field">
+        <label>加熱降黏 <span class="sub">（有效黏度 ≈ ÷5）</span></label>
+        <div class="seg" id="seg-heat">
+          <button data-v="no" class="on">不加熱</button>
+          <button data-v="yes">加熱降黏</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>膠量／精度需求</label>
+        <div class="seg" id="seg-precision">
+          <button data-v="any" class="on">不限</button>
+          <button data-v="micro">微量高精度（nL–μL）</button>
+          <button data-v="normal">一般點／線</button>
+          <button data-v="bulk">大膠量連續</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>接觸方式限制 <span class="sub">易碎／深腔／高速 → 需非接觸</span></label>
+        <div class="seg" id="seg-contact">
+          <button data-v="any" class="on">不限</button>
+          <button data-v="noncontact">需非接觸</button>
+          <button data-v="contact">接觸式即可</button>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-run">產生推薦</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-ghost" id="btn-reset" style="flex:1">清除條件</button>
+        <button class="btn btn-ghost" id="btn-print" style="flex:1">匯出 PDF</button>
+      </div>
+    </aside>
+    <div class="results-col">
+      <div id="result-area"><div class="card"><p class="hint" style="margin:0">輸入左側條件後按「產生推薦」，此處顯示指標卡、Top 5 推薦閥型與針頭／供料／HS 配套建議。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 資料庫系統 ============ -->
+<section class="panel" id="panel-db">
+  <div class="card">
+    <h2>點膠知識資料庫</h2>
+    <p class="hint">依心智圖完整收錄 <span id="db-total"></span> 個資料庫。可用關鍵字即時篩選。</p>
+    <div class="db-nav" id="db-nav"></div>
+    <div class="search-row">
+      <input type="text" id="db-search" placeholder="搜尋此資料庫（名稱、黏度、材質、規範…）">
+      <span class="pill-count" id="db-count" style="align-self:center"></span>
+    </div>
+    <div class="table-scroll" id="db-table"></div>
+  </div>
+</section>
+
+<!-- ============ 工程計算 ============ -->
+<section class="panel" id="panel-calc">
+  <div class="grid grid-2">
+    <div class="card">
+      <h2>Hagen–Poiseuille 流量模型</h2>
+      <p class="hint">Q₀ = π·r⁴·ΔP / (8·μ·L)（層流、牛頓流體）；Q = Q₀ × Cd；V = Q × t。關係：Q ∝ ID⁴、∝ ΔP、∝ 1/μ、∝ 1/L。黏度請填工作溫度與工作剪切率下的表觀黏度（非牛頓流體有剪切變稀，實際流量通常高於依低剪切黏度的估算）。</p>
+      <div class="grid grid-2">
+        <div class="field"><label>針頭號數 <span class="sub">下拉帶入 ID，或自填</span></label><select id="c-gauge"></select></div>
+        <div class="field"><label>針頭長度 <span class="sub">下拉帶入，或自填</span></label><select id="c-len-sel"></select></div>
+        <div class="field"><label>針頭內徑 ID <span class="sub">mm</span></label><input type="number" id="c-id" step="0.01" value="0.6"></div>
+        <div class="field"><label>針頭長度 L <span class="sub">mm</span></label><input type="number" id="c-len" step="0.5" value="12.7"></div>
+        <div class="field"><label>驅動壓差 ΔP <span class="sub">bar（1 bar = 100 kPa = 14.5 psi）</span></label><input type="number" id="c-dp" step="0.1" value="3"></div>
+        <div class="field"><label>黏度 μ <span class="sub">cps（工作溫度下，1 cps = 1 mPa·s）</span></label><input type="number" id="c-visc" value="50000"></div>
+        <div class="field"><label>出膠時間 t <span class="sub">s</span></label><input type="number" id="c-t" step="0.05" value="0.5"></div>
+        <div class="field"><label>流量係數 Cd <span class="sub">實測膠量 ÷ 理論膠量，預設 0.75</span></label><input type="number" id="c-cd" step="0.05" min="0.1" max="1.5" value="0.75"></div>
+      </div>
+      <details class="cd-help"><summary>流量係數 Cd 如何填寫</summary>
+        <p>Cd 是「實測膠量 ÷ 理論膠量」的修正係數，用來吸收公式未考慮的入口損失、非牛頓剪切變稀、膠道電阻、壓力建立延遲等影響。未實測前依下表選起始值；量產前務必用 DOE 稱重校正。</p>
+        <table><thead><tr><th>情境</th><th>起始 Cd</th><th>說明</th></tr></thead><tbody>
+        <tr><td>低黏牛頓流體（&lt; 5,000 cps）、直針 L/ID ≥ 20</td><td>0.90–1.00</td><td>接近理想層流，公式很準</td></tr>
+        <tr><td>中黏（5k–50k cps）、標準直針 12.7 mm</td><td>0.70–0.85</td><td>預設 0.75 屬此區</td></tr>
+        <tr><td>高黏／膏體／含填料（&gt; 50k cps）</td><td>0.50–0.70</td><td>壓力建立慢、壁面滑移，短脈時差異更大</td></tr>
+        <tr><td>錐形針（寶塔針）</td><td>1.0–1.5</td><td>有效管長遠短於標示長度，實際流量高於直針理論值</td></tr>
+        <tr><td>已有實測數據</td><td>實測 V ÷ 理論 V₀</td><td>同一組 ID／L／ΔP／μ／t 下稱重 5–10 點取平均，換料號或換針型需重新校正</td></tr>
+        </tbody></table>
+        <p>校正步驟：① Cd 先填 1.0 計算理論膠量 V₀；② 依相同參數實點 5–10 點稱重（膠量 ÷ 密度 = 體積）；③ Cd = 平均實測 V ÷ V₀；④ 填回此欄，後続在鄰近參數區間內估算即可使用。</p>
+      </details>
+      <button class="btn btn-primary" style="margin-top:6px" id="btn-calc">計算流量</button>
+      <div class="calc-out" id="calc-out" hidden></div>
+    </div>
+    <div class="card">
+      <h2>速度可行性與 Gauge 對照</h2>
+      <p class="hint">以流量反推線速度，比對機台最大速度（風險規則：不可行 → 重新選型或多頭）。</p>
+      <div class="grid grid-2">
+        <div class="field"><label>目標線寬 <span class="sub">mm</span></label><input type="number" id="s-w" step="0.1" value="1.0"></div>
+        <div class="field"><label>目標膠高 <span class="sub">mm</span></label><input type="number" id="s-h" step="0.05" value="0.3"></div>
+        <div class="field"><label>截面係數 <span class="sub">0.6–0.8</span></label><input type="number" id="s-k" step="0.05" value="0.7"></div>
+        <div class="field"><label>機台最大速度 <span class="sub">mm/s</span></label><input type="number" id="s-vmax" value="300"></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:6px" id="btn-speed">檢核速度</button>
+      <div class="calc-out" id="speed-out" hidden></div>
+      <div class="section-title">黏度 → 初始 Gauge 對照（SOP 鐵則）</div>
+      <div class="table-scroll" style="max-height:none">
+        <table><thead><tr><th>工作黏度</th><th>初始 Gauge</th><th>備註</th></tr></thead>
+        <tbody>
+          <tr><td>&lt; 1k cps</td><td>24–30G（極微量 32–34G）</td><td>微量、噴射應用</td></tr>
+          <tr><td>1k–5k cps</td><td>22–25G</td><td>中低黏、底填</td></tr>
+          <tr><td>5k–20k cps</td><td>20–23G</td><td>—</td></tr>
+          <tr><td>20k–100k cps</td><td>18–22G</td><td>UV、線膠、銀膠</td></tr>
+          <tr><td>&gt; 100k cps</td><td>14–18G／錐形</td><td>導熱膠、灌封；含填料 ID ≥ d50×10</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DFA 檢核 ============ -->
+<section class="panel" id="panel-dfa">
+  <div class="card">
+    <h2>DFA 設計檢核</h2>
+    <p class="hint">選膠材，系統列出需確認的項目；每項點「通過／待確認／不適用」即可。強制項全部通過→可設計凍結。HS 項目依膠材 HS 等級自動帶入。</p>
+    <div class="dfa-top">
+      <div class="field"><label>膠材家族</label><select id="dfa-glue"><option value="">請選擇膠材</option></select></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="dfa-gate-box" class="dfa-gate pending"><div class="g-title">請先選膠材</div><div class="g-sub">選擇膠材後自動產生適用檢核項目。</div></div>
+    <div class="dfa-bar">
+      <div class="progress-line" style="flex:1;min-width:240px;margin:0"><span id="dfa-progress-text">0 / 0</span><div class="progress-track"><i id="dfa-progress" style="width:0%"></i></div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" style="min-height:38px;padding:6px 14px;font-size:13px" id="btn-dfa-open">只看未處理</button>
+        <button class="btn btn-ghost" style="min-height:38px;padding:6px 14px;font-size:13px" id="btn-dfa-print">匯出報告</button>
+        <button class="btn btn-ghost" style="min-height:38px;padding:6px 14px;font-size:13px" id="btn-dfa-clear">重設</button>
+      </div>
+    </div>
+    <div id="dfa-list"></div>
+  </div>
+</section>
+
+</div>
+<script>
+// ================= 資料庫（依心智圖） =================
+const SCENARIOS = [
+ {id:"primer", name:"Primer／表面前處理", glue:"Primer / Activator", valve:"噴霧閥", needle:"不走針頭", families:["Primer / Activator"]},
+ {id:"seal", name:"密封／填縫", glue:"Silicone／RTV", valve:"柱塞閥", needle:"依線寬選定", families:["Silicone 矽膠","RTV 矽膠"]},
+ {id:"coat", name:"面塗／薄膜塗佈", glue:"低黏膠材", valve:"噴霧閥／噴射閥掃描", needle:"—", families:["UV 膠","Epoxy","Primer / Activator"]},
+ {id:"tim", name:"導熱介面（TIM）", glue:"導熱膠", valve:"螺桿閥", needle:"大口徑錐形", families:["導熱膠 TIM"]},
+ {id:"underfill", name:"底部填充（Underfill）", glue:"底填膠", valve:"噴射閥／針閥＋加熱", needle:"22–25G", families:["底填膠 Underfill"]},
+ {id:"bond", name:"結構接著", glue:"Epoxy／PUR／Silicone", valve:"柱塞閥／針閥／時間壓力閥", needle:"依黏度選定", families:["Epoxy","PUR 熱熔","Silicone 矽膠"]},
+ {id:"potting", name:"灌封（Potting）", glue:"Epoxy AB／PU", valve:"AB 混合螺桿閥／AB 混合閥", needle:"靜態混合管", families:["Epoxy"]},
+ {id:"highvol", name:"高黏大膠量點塗", glue:"導熱膠／Silicone", valve:"柱塞閥／螺桿閥", needle:"大口徑錐形", families:["導熱膠 TIM","Silicone 矽膠"]},
+ {id:"microjet", name:"微點／高速噴射", glue:"UV 膠", valve:"壓電噴射閥", needle:"Micro Tip 30G+", families:["UV 膠"]},
+ {id:"general", name:"一般點膠（點／線）", glue:"低–中黏度膠材", valve:"針閥／時間壓力式", needle:"依黏度 22–25G", families:["UV 膠","Epoxy","RTV 矽膠","厭氧膠","CA 瞬間膠"]}
+];
+const FAMILIES = [
+ {name:"導熱膠 TIM", visc:[50000,5000000], rule:"螺桿閥＋大口徑錐形針；ID ≥ d50×10（嚴格看 d90）", needleLimit:"一般 SS 磨耗；建議 PTFE 內襯／大口徑錐形", hood:"建議評估", hs:{lv:"建議", hazard:"低揮發；溶劑型配方例外", control:"一般通風；溶劑型依 SDS 加評"}, flags:{filler:true}},
+ {name:"Silicone 矽膠", visc:[5000,1000000], rule:"電子件選脫醇型；加成型避免含硫／胺汙染", needleLimit:"—", hood:"條件：依 SDS 評估", hs:{lv:"條件", hazard:"脫醇型釋放甲醇（第二種有機溶劑）；脫醋酸型釋放醋酸；視配方而定", control:"依 SDS 比對；脫醇型大量作業需局部抽氣；固化區通風"}, flags:{}},
+ {name:"底填膠 Underfill", visc:[1000,50000], rule:"加熱降黏（有效黏度 ≈ ÷5）；毛細流動設計", needleLimit:"—", hood:"建議評估", hs:{lv:"建議", hazard:"加熱降黏與固化釋放少量揮發物", control:"加熱工位通風；依 SDS 確認"}, flags:{}},
+ {name:"Primer / Activator", visc:[1,5000], rule:"噴霧閥；易燃防爆評估", needleLimit:"不走針頭；噴霧閥", hood:"強制：氣罩評估＋局部抽氣", hs:{lv:"強制", hazard:"溶劑型（丙酮／庚烷／MEK 等列管有機溶劑），易燃、噴霧形成高濃度蒸氣", control:"發生源設氣罩＋局部抽氣（包圍型 ≥0.4 m/s）；防爆設備、接地、儲存量管制"}, flags:{sprayOnly:true, flammable:true}},
+ {name:"RTV 矽膠", visc:[1000,100000], rule:"電子件選脫醇型", needleLimit:"—", hood:"條件：依 SDS 評估", hs:{lv:"條件", hazard:"脫醇型釋放甲醇（第二種有機溶劑）；脫醋酸型釋放醋酸；視配方而定", control:"依 SDS 比對；脫醇型大量作業需局部抽氣；固化區通風"}, flags:{}},
+ {name:"厭氧膠", visc:[50,5000], rule:"隔膜閥＋PP；接合面須含活性金屬才會固化", needleLimit:"禁金屬流道；PP 針頭", hood:"條件：依 SDS 評估", hs:{lv:"條件", hazard:"甲基丙烯酸酯單體，皮膚／呼吸道刺激與致敏", control:"依 SDS 評估；大量或加熱作業設局部抽氣；個人安全防護具（手套／護目）"}, flags:{noMetal:true}},
+ {name:"CA 瞬間膠", visc:[1,5000], rule:"隔膜閥＋PP／PTFE 流道", needleLimit:"禁金屬（30 秒內固化）；PP／PTFE", hood:"強制：氣罩評估＋局部抽氣", hs:{lv:"強制", hazard:"氰基丙烯酸酯單體蒸氣強刺激（眼／呼吸道）；清洗用丙酮／硝甲烷屬列管溶劑", control:"點膠與清洗工位設局部抽氣；溫濕度控制降低白化；溶劑儲存管制"}, flags:{noMetal:true}},
+ {name:"銀膠", visc:[5000,200000], rule:"使用前均勻攪拌；ID ≥ d50×10", needleLimit:"ID ≥ d50×10", hood:"建議評估", hs:{lv:"建議", hazard:"低揮發；溶劑型配方例外", control:"一般通風；溶劑型依 SDS 加評"}, flags:{filler:true}},
+ {name:"錫膏", visc:[30000,200000], rule:"冷藏回溫 SOP；螺桿閥＋大 ID", needleLimit:"排除隔膜閥；大 ID／XTW 針", hood:"強制：氣罩評估＋局部抽氣", hs:{lv:"強制", hazard:"助焊劑揮發物（松香／醇類）；含鉛料屬特化物質", control:"回焊／加熱發生源設氣罩＋局部抽氣；含鉛料作業環境監測"}, flags:{filler:true, noDiaphragm:true}},
+ {name:"PUR 熱熔", visc:[1000,30000], rule:"全金屬針頭＋加熱閥；防潮管理", needleLimit:"禁塑膠；強制全金屬針頭＋加熱閥", hood:"強制：氣罩評估＋局部抽氣", hs:{lv:"強制", hazard:"加熱釋放異氰酸酯（MDI，特化物質）蒸氣，呼吸道致敏", control:"加熱閥／膠槽發生源設氣罩＋局部抽氣；定期作業環境監測"}, flags:{heatedPath:true}},
+ {name:"UV 膠", visc:[100,10000], rule:"遮光針頭、遮光儲存、防 UV 外洩；遮光結構→UV＋熱雙固化", needleLimit:"禁透明針；用遮光針（黑／琥珀）", hood:"建議評估", hs:{lv:"建議", hazard:"丙烯酸酯單體致敏；UV 燈臭氧；UV 外洩", control:"UV 固化區通風或抽氣；遮光罩；個人安全防護具"}, flags:{uvShield:true}},
+ {name:"Epoxy", visc:[500,300000], rule:"單液：冷藏回溫 SOP、爐溫曲線與工件耐溫檢討｜雙液：Pot life 與 CT／停機策略匹配、雙液計量架構、混合度驗證", needleLimit:"雙液注意混合管相容性（靜態混合管）", hood:"條件：依 SDS 評估", hs:{lv:"條件", hazard:"胺類硬化劑致敏（雙液）；加熱固化釋放少量揮發物", control:"依 SDS 評估；大量灌封或加熱固化設局部抽氣；個人安全防護具（NBR 手套）"}, flags:{}}
+];
+const VALVES = [
+ {name:"時間壓力式", tol:[10,15], group:"低～中黏度", window:[1,50000], contact:"接觸式", precision:["一般"], materials:["UV 膠","Epoxy","RTV 矽膠"], note:"無恆溫有膠量漂移風險；止膠／滴膠風險"},
+ {name:"AB 雙液氣壓推桿", tol:[5,10], group:"低～中黏度", window:[1000,50000], contact:"接觸式", precision:["一般"], materials:["Epoxy"], note:"僅限彈夾 Cartridge 包材（注意 AB 比例及混合管接頭 Type）；混合比容差驗證；止膠／滴膠風險", abOnly:true},
+ {name:"PUR 加熱閥", tol:[5,10], group:"低～中黏度", window:[1000,20000], contact:"接觸式", precision:["一般"], materials:["PUR 熱熔"], note:"110–140°C；防潮供料／加熱防護", purOnly:true},
+ {name:"噴霧閥", tol:[15,20], group:"低～中黏度", window:[1,2000], contact:"非接觸式", precision:["低"], materials:["Primer / Activator"], note:"易燃溶劑防爆"},
+ {name:"針閥", tol:[3,5], group:"低～中黏度", window:[1,50000], contact:"接觸式", precision:["一般","高精度"], materials:["UV 膠","Epoxy","厭氧膠","RTV 矽膠"], note:"回吸（suck-back）控制拉絲"},
+ {name:"柱塞閥", tol:[3,5], group:"中～高黏度／膏體", window:[10000,200000], contact:"接觸式", precision:["一般"], materials:["Silicone 矽膠","Epoxy","底填膠 Underfill"], note:"—"},
+ {name:"噴射閥（氣動）", tol:[3,5], group:"中～高黏度／膏體", window:[100,500000], contact:"非接觸式", precision:["一般","高精度"], materials:["UV 膠","Epoxy","銀膠","底填膠 Underfill"], note:"深腔／高低差工件優勢；噴射頻率與膠材匹配"},
+ {name:"隔膜閥", tol:[5,10], group:"中～高黏度／膏體", window:[1,100000], contact:"接觸式", precision:["一般"], materials:["CA 瞬間膠","厭氧膠","UV 膠"], note:"PP 流道；低死角利清洗", noMetalSafe:true},
+ {name:"壓電噴射閥", tol:[1,2], group:"中～高黏度／膏體", window:[1,100000], contact:"非接觸式", precision:["高精度"], materials:["UV 膠"], note:"高黏型上限 ≤ 50,000 cps；定期校驗 Hz", hiViscCap:50000},
+ {name:"AB 混合螺桿閥", tol:[1,2], group:"中～高黏度／膏體", window:[1000,500000], contact:"接觸式", precision:["一般","高精度"], materials:["Epoxy"], note:"僅限雙液；必配靜態混合管；依 Pot life 管制", abOnly:true},
+ {name:"螺桿閥", tol:[1,3], group:"中～高黏度／膏體", window:[1000,500000], contact:"接觸式", precision:["一般","高精度"], materials:["導熱膠 TIM","銀膠","錫膏","Silicone 矽膠","Epoxy","底填膠 Underfill","RTV 矽膠"], note:"單液專用（黏度／精度比照 AB 螺桿閥）；螺桿轉速定量，黏度漂移影響小；含填料注意螺桿磨耗", singleOnly:true},
+ {name:"定量閥", tol:[1,3], group:"中～高黏度／膏體", window:null, contact:"依型號", precision:["高精度"], materials:["導熱膠 TIM","銀膠","Epoxy","Silicone 矽膠"], note:"體積計量不受黏度漂移影響；單體成本高，適用 CPK／車規、醫療嚴格場合", positive:true}
+];
+const NEEDLES = [
+ {name:"彎頭針（深腔用）", gauge:"18–25G", mat:"不鏽鋼 SS", visc:"中低黏", ban:"—", note:"深腔對策；針長影響出膠穩定性需驗證"},
+ {name:"全金屬加熱針", gauge:"14–23G", mat:"全金屬加熱型", visc:"熔融後 1k–20k", ban:"—", note:"與 PUR 加熱閥配套"},
+ {name:"PP／PE 塑膠針", gauge:"14–25G", mat:"PP／PE 塑膠", visc:"低黏", ban:"PUR（需全金屬）", note:"化學相容性佳"},
+ {name:"遮光針（黑／琥珀）", gauge:"18–30G", mat:"遮光（黑／琥珀）", visc:"UV 膠全黏度域", ban:"—", note:"防針內固化"},
+ {name:"PTFE 內襯針", gauge:"18–25G", mat:"PTFE 內襯", visc:"含填料／反應性膠材", ban:"—", note:"抗磨耗、低附著"},
+ {name:"錐形塑膠針（寶塔）", gauge:"14–25G", mat:"塑膠錐形", visc:"高黏／含填料", ban:"—", note:"低流阻、降低填料剪切；氣壓 80→30 psi"},
+ {name:"精密金屬針 32–34G", gauge:"32–34G（ID 0.10–0.08）", mat:"不鏽鋼 SS", visc:"極微量", ban:"—", note:"極微量、精密噴射；堵針風險高"},
+ {name:"精密金屬針 27–30G", gauge:"27–30G（ID 0.21–0.16）", mat:"不鏽鋼 SS", visc:"<1k 微量", ban:"—", note:"微量、噴射應用"},
+ {name:"標準金屬直針 22–25G", gauge:"22–25G（ID 0.41–0.26）", mat:"不鏽鋼 SS", visc:"1k–5k 中低黏", ban:"CA 禁金屬→改用 PP 同規格", note:"中低黏、底填"},
+ {name:"標準金屬直針 18–20G", gauge:"18–20G（ID 0.84–0.60）", mat:"不鏽鋼 SS", visc:"20k–100k 高中黏", ban:"CA／厭氧（禁金屬）", note:"高中黏、UV、線膠、銀膠"},
+ {name:"標準金屬直針 14–16G", gauge:"14–16G（ID 1.60–1.19）", mat:"不鏽鋼 SS", visc:">100k cps 超高黏", ban:"CA／厭氧（禁金屬）", note:"超高黏、導熱膠、灌封"}
+];
+const FEEDING = [
+ {name:"特殊化學品供料（CA 等）", cap:"小容量原瓶", visc:"低黏", deair:"—", note:"材質相容性（禁金屬）；停機清洗 SOP", use:"CA／厭氧等反應性膠材"},
+ {name:"AB 雙液計量供膠系統", cap:"50／400 ml 雙管卡匣或桶裝", visc:"1k–500k（依閥型）", deair:"A/B 分開脫泡", note:"A/B 比例、Pot life、混合度驗證", use:"雙液計量＋靜態混合管"},
+ {name:"壓力桶（3／5／10 L）", cap:"3L／5L／10L 可訂製", visc:"中低黏大膠量連續", deair:"攪拌／真空", note:"壓力調節、液位、殘量管理；氣源壓力穩定", use:"大量連續供膠"},
+ {name:"大包裝罐（300／500 ml）", cap:"300 ml／500 ml", visc:"中高黏", deair:"離心／真空", note:"轉填管制；批號追溯", use:"產線中量連續供膠"},
+ {name:"膠管／卡匣（軟包裝）", cap:"依供應商", visc:"中低黏", deair:"離心脫泡", note:"擠壓供料；避免空氣捲入", use:"原包直上減少轉填汙染"},
+ {name:"針筒（Syringe）", cap:"3／5／10／30／55 cc", visc:"全黏度域（廠內常用 30／55 cc）", deair:"離心脫泡", note:"美式／歐式／日系卡口鎖固扛力不同；批次時效管理", use:"單站、小批量、換膠頻繁"},
+ {name:"齒輪泵／螺桿泵（大流量連續）", cap:"整桶／整槽", visc:"中高黏", deair:"依系統", note:"與壓力桶串接；脈動抑制", use:"整線大流量連續塗佈"}
+];
+const RISK_RULES = [
+ {lv:"高", cat:"風險門檻", name:"高度公差→膠量漂移", cond:"工件高度公差 ±0.1 mm 以上未補償", act:"出膠量漂移可達 ±15%；收緊公差或 Laser Z 補償"},
+ {lv:"高", cat:"風險門檻", name:"針頭間隙下限", cond:"膠溝與針頭 OD 單邊間隙 ≥ 0.1 mm", act:"未達→干涉、刮膠"},
+ {lv:"強制高風險", cat:"風險門檻", name:"溢膠門檻", cond:"預估膠寬 > 膠溝寬度", act:"溢膠；列強制風險退回設計"},
+ {lv:"中", cat:"風險門檻", name:"高黏出膠延遲", cond:"黏度 > 50,000 cps", act:"出膠延遲、拉絲"},
+ {lv:"高", cat:"風險門檻", name:"低黏高壓滴漏", cond:"黏度 < 1,000 cps 且壓力 > 0.5 bar", act:"滴漏／飛濫"},
+ {lv:"高", cat:"風險門檻", name:"堵針風險", cond:"ID < 0.8 mm 且高黏／含填料", act:"堵針風險；放大 ID 或改錐形針"},
+ {lv:"強制高風險", cat:"風險門檻", name:"理論流量下限", cond:"理論流量 < 0.0025 mL/s", act:"幾乎不出膠／延遲；強制高風險"},
+ {lv:"中", cat:"計算模型", name:"DOE 參數區間範圍", cond:"3 壓力 × 3 時間 × 3 重複稱重（0.1 mg）", act:"目標 CV% ≤ 3%、Cpk ≥ 1.33；回歸曲線反推量產參數"},
+ {lv:"中", cat:"計算模型", name:"Hagen-Poiseuille 流量模型", cond:"Q₀ = π·r⁴·ΔP／(8·μ·L)；Q = Q₀×Cd；V = Q×t（Cd = 實測／理論，直針 0.5–1.0，錐形針可 1.0–1.5）", act:"非牛頓流體需 Power-law K/n 修正"},
+ {lv:"中", cat:"溫度補償", name:"加熱降黏補償", cond:"加熱後有效黏度 ≈ 原黏度 ÷ 5", act:"恆溫 20–25°C 或程式化多組溫度參數"},
+ {lv:"低", cat:"SOP 鐵則", name:"黏度→初始 Gauge 對照", cond:"<1k→24–30G；1k–5k→22–25G；5k–20k→20–23G；20k–100k→18–22G；>100k→14–18G", act:"作為針頭起始選型，DOE 後修正"},
+ {lv:"中", cat:"SOP 鐵則", name:"冷機暖機", cond:"冷機啟動", act:"50–200 次空噴暖機"},
+ {lv:"高", cat:"SOP 鐵則", name:"CA 停機清洗", cond:"停機 > 20 秒", act:"強制清洗"},
+ {lv:"高", cat:"SOP 鐵則", name:"AB Pot life 管制", cond:"停機 > Pot life 30%／50%", act:">30% 強制清管；>50% 熟化堵管"},
+ {lv:"高", cat:"硬篩排除", name:"超高黏專案評估", cond:"黏度 > 500,000 cps", act:"進入專案評估，不給標準答案"},
+ {lv:"強制高風險", cat:"硬篩排除", name:"速度可行性", cond:"目標膠量反推速度 > 機台最大速度", act:"不可行；重新選型或多頭"}
+];
+const FAILURES = [
+ {name:"點位偏移超差", cause:"公差堆疊未分析，累積超過膠溝餘量", mat:"—", dfa:"公差堆疊"},
+ {name:"整批反向點膠", cause:"治具無方向防呆", mat:"—", dfa:"方向防呆"},
+ {name:"工件翹曲", cause:"膠路不對稱＋固化收縮應力", mat:"薄板件", dfa:"對稱性／分段固化"},
+ {name:"膠路檢不到", cause:"遮擋或對比不足", mat:"透明膠", dfa:"可視性；膠材加螢光劑或調基材配色"},
+ {name:"同軸度／位置度超差", cause:"二次定位、翻面", mat:"—", dfa:"單次定位"},
+ {name:"膠量漂移 ±15%", cause:"工件高度公差未被 Z 補償", mat:"全膠材", dfa:"高度公差"},
+ {name:"深腔點不到", cause:"相鄰結構遮擋針頭", mat:"全膠材", dfa:"接近空間"},
+ {name:"溢膠汙染", cause:"預估膠寬 > 膠溝寬度", mat:"全膠材", dfa:"膠溝規則"},
+ {name:"遮光死角固化不全", cause:"UV 膠＋遮光基材，未規劃雙固化", mat:"UV 膠", dfa:"透光檢討"}
+];
+const DFA_ITEMS = [
+ {cat:"安全", lv:"強制", name:"HS 氣罩評估與局部抽氣", basis:"特化／列管有機溶劑成分：比對 SDS 與特化標準附表一；發生源設氣罩，控制風速包圍型 ≥0.4／外裝側邊 ≥0.5 m/s；合格人員出具報告書；含苯膠糊（苯>5%）禁用", trig:"HS 強制"},
+ {cat:"安全", lv:"條件", name:"HS 揮發物／致敏性評估", basis:"所有膠材皆需：依 SDS 確認揮發物與致敏成分；決定通風方式（一般通風／局部抽氣）與個人安全防護具；固化加熱源是否需抽氣", trig:"—"},
+ {cat:"安全", lv:"強制", name:"易燃防爆", basis:"溶劑型 Primer／Activator：防爆設備、靜電接地、儲存量管制、遠離熱源", trig:"易燃溶劑"},
+ {cat:"安全", lv:"強制", name:"防護", basis:"UV 遮罩／加熱防燙／安全隔離防護", trig:"—"},
+ {cat:"設備", lv:"建議", name:"點膠頭數規劃", basis:"單頭／多頭／Robot 依節拍與 UPH 決定", trig:"—"},
+ {cat:"設備", lv:"建議", name:"治具適合自動化", basis:"換 Type 快速切換；插件／吊裝／維護方便", trig:"—"},
+ {cat:"製程", lv:"強制", name:"針尖–溝底間隙", basis:"Z 高度已定義並納入參數", trig:"—"},
+ {cat:"製程", lv:"條件", name:"來料時效", basis:"回溫／開封時限納入換線與批量策略", trig:"—"},
+ {cat:"製程", lv:"強制", name:"精度等級匹配", basis:"精度等級 → 設備計量等級經驗證可行", trig:"—"},
+ {cat:"製程", lv:"條件", name:"耐溫", basis:"固化溫度不傷工件", trig:"熱固化時"},
+ {cat:"製程", lv:"強制", name:"靜態混合管配置", basis:"AB 膠必配拋棄式靜態混合管：節數與末端針頭規格依 TDS 另行選定；停機依 Pot life 管制清管／換管；混合度驗證（Shore 硬度／色差）", trig:"AB 膠時"},
+ {cat:"製程", lv:"條件", name:"AB Pot life", basis:"與 CT／停機策略匹配", trig:"AB 膠時"},
+ {cat:"檢測", lv:"條件", name:"A/B 膠水防呆", basis:"color sensor 或不同入料檢驗設計", trig:"AB 膠時"},
+ {cat:"檢測", lv:"建議", name:"缺膠檢查", basis:"液面 Sensor／color sensor 缺膠偵測已規劃", trig:"—"},
+ {cat:"檢測", lv:"建議", name:"針頭校正機制", basis:"XYZ 校正（Tip Finder／AOI／Z 高度位移計、接觸開關）已規劃", trig:"—"},
+ {cat:"檢測", lv:"建議", name:"出膠檢查機制", basis:"流量／重量／壓力監測或 AOI／雷射截面檢查已規劃", trig:"透明膠 AOI 不適用"},
+ {cat:"檢測", lv:"建議", name:"可重工性", basis:"重工流程與重工後檢驗基準已定義", trig:"—"},
+ {cat:"檢測", lv:"強制", name:"追溯性", basis:"膠批號／參數記錄欄位已定義（MES）；FAI 首件", trig:"—"},
+ {cat:"檢測", lv:"強制", name:"膠量可量測", basis:"重量法（0.1 mg）／影像法可行", trig:"—"},
+ {cat:"檢測", lv:"強制", name:"膠路可視", basis:"CCD 可判讀（對比足夠）", trig:"—"},
+ {cat:"量產", lv:"建議", name:"換型與耗材", basis:"治具快換；針頭／閥件 PM 週期已定", trig:"—"},
+ {cat:"量產", lv:"強制", name:"線體整合", basis:"前後站 I/O、MES 握手已定義", trig:"—"},
+ {cat:"定位", lv:"強烈建議", name:"方向防呆", basis:"定位非對稱，反向無法放入", trig:"—"},
+ {cat:"定位", lv:"強制", name:"治具重複精度", basis:"≤ ±0.02 mm，與平台精度匹配", trig:"—"},
+ {cat:"定位", lv:"建議", name:"單次定位", basis:"無翻面、夾持不遮膠路", trig:"—"},
+ {cat:"接合", lv:"強制", name:"膠路對稱性", basis:"薄板件膠路對稱或分段固化，避免收縮翹曲", trig:"—"},
+ {cat:"接合", lv:"建議", name:"膠路幾何", basis:"連續、無急轉角、有溢膠餘量", trig:"—"},
+ {cat:"接合", lv:"強制", name:"填料間隙", basis:"ID ≥ d50×10（嚴格看 d90）", trig:"含填料時"},
+ {cat:"接合", lv:"強制", name:"針頭間隙", basis:"膠溝與針頭 OD 單邊 ≥ 0.1 mm", trig:"—"},
+ {cat:"接合", lv:"強制", name:"膠寬 vs 膠溝", basis:"預估膠寬 ≤ 膠溝寬度", trig:"—"},
+ {cat:"接合", lv:"強制", name:"膠量區間範圍已定義", basis:"型態／膠量／線寬／精度／節拍齊全", trig:"—"},
+ {cat:"可及", lv:"強制", name:"公差堆疊", basis:"工件＋治具＋平台累積公差 ≤ 膠溝寬餘量", trig:"—"},
+ {cat:"可及", lv:"強制", name:"高度公差", basis:"與 Z 補償能力匹配", trig:"—"},
+ {cat:"可及", lv:"強烈建議", name:"點膠方向", basis:"垂直向下", trig:"—"},
+ {cat:"可及", lv:"強制", name:"針頭接近", basis:"無遮擋；深腔有對策", trig:"—"},
+ {cat:"基材", lv:"強制", name:"厭氧活性面", basis:"接合面含活性金屬", trig:"厭氧膠時"},
+ {cat:"基材", lv:"條件", name:"表面能", basis:"低表面能基材（PP／PE 等）已規劃前處理", trig:"—"},
+ {cat:"基材", lv:"強制", name:"UV 透光", basis:"透光，或已決議雙固化路徑", trig:"UV 膠時"}
+];
+const INCOMING = [
+ {stage:"驗收 IQC", name:"IQC 驗收與 COA 核對", rule:"核對批號／製造日／效期；COA 黏度／比重對照 TDS；SDS 版本核對（連動需氣罩評估）", risk:"用錯料／過期料上線；列管成分未識別", rec:"進料檢驗單＋留樣", mat:"全部"},
+ {stage:"儲存", name:"效期與 FIFO 管制", rule:"先進先出；到期前 30 天預警；過期料隔離區標示", risk:"過期料混用→固化／強度異常", rec:"庫存系統效期欄位＋盤點", mat:"全部"},
+ {stage:"儲存", name:"常溫恆溫儲存", rule:"20～25°C、避日照；UV 膠遮光（琥珀容器／遮光櫃）；CA／厭氧避高溫", risk:"UV 提前固化、黏度漂移", rec:"倉儲溫濕度記錄", mat:"UV 膠、CA 瞬間膠、厭氧膠"},
+ {stage:"儲存", name:"冷藏／冷凍儲存", rule:"錫膏 2～10°C；單液 Epoxy／底填膠 -40°C 或依 TDS；專用冰箱、禁與食品混放", risk:"提前固化、性能劣化", rec:"冰箱溫度記錄（data logger）", mat:"錫膏、Epoxy 單液、底填膠、銀膠"},
+ {stage:"回溫／解凍", name:"回溫 SOP", rule:"錫膏未開封回溫 ≥4 hr 防結露；冷凍膠依 TDS 回溫；禁止加熱速回", risk:"結露吸濕→氣泡、焊接不良", rec:"回溫記錄卡（開始／完成時間）", mat:"錫膏、Epoxy 單液、底填膠"},
+ {stage:"開封／轉填", name:"開封管制", rule:"開封日期標籤；開封後使用時限依 TDS；濕氣敏感膠氮氣回充", risk:"濕氣固化膠劣化（PUR／RTV／CA）", rec:"開封標籤＋時限追蹤", mat:"PUR 熱熔、CA 瞬間膠、RTV 矽膠"},
+ {stage:"開封／轉填", name:"轉填與分裝", rule:"大包裝→針筒防捲氣（壓盤泵／離心脫泡）；容器材質相容（CA／厭氧禁金屬容器）", risk:"捲氣、汙染、提前固化", rec:"壓盤泵、離心機；批號轉記", mat:"CA 瞬間膠、厭氧膠、銀膠"},
+ {stage:"使用中管制", name:"使用中時效管制", rule:"Pot life／針筒上機時限；PUR 熔膠槽滯留時間管制；錫膏開罐後時限", risk:"黏度上升→膠量漂移、堵針", rec:"上機時間標籤＋MES 警示", mat:"Epoxy AB、PUR 熱熔、錫膏"},
+ {stage:"使用中管制", name:"批號追溯", rule:"膠材批號綁定工單／機台／時間（MES）；留樣保存至保固期後", risk:"客訴無法追溯批次", rec:"MES 記錄", mat:"全部"},
+ {stage:"廢棄", name:"廢棄處理", rule:"AB 膠混合固化後廢棄；含列管溶劑（Primer 等）依廢棄物清理法交合格廠商；空容器分類", risk:"環保違規、相容性反應風險", rec:"廢棄物清冊＋聯單", mat:"Primer / Activator、Epoxy AB"}
+];
+const ENVIRONMENT = [
+ {cat:"溫濕度", name:"環境溫度", spec:"20～25°C 恆溫（±2°C）；點膠區獨立空調，避開門口／熱源", risk:"黏度隨溫度漂移（可達數倍）→膠量不穩；季節切換需重調參數", mon:"溫度計／data logger；調機記錄環溫"},
+ {cat:"溫濕度", name:"環境濕度", spec:"40～60 %RH", risk:"過高：CA 白化、PUR／RTV 提前固化；過低：靜電＋濕氣固化膠固化過慢", mon:"濕度計；除濕／加濕設備"},
+ {cat:"潔淨度", name:"潔淨度等級", spec:"光學／半導體 Class 1k～10k；一般電子 10 萬級或潔淨棚；正壓管制", risk:"落塵→膠路夾雜、光學缺陷、接合強度下降", mon:"塵埃粒子計數器定期量測"},
+ {cat:"安全防護", name:"UV 光管制", spec:"UV 膠工作區用琥珀燈／防 UV 簾；避免日光燈／陽光直射膠路與供膠系統", risk:"針內／管路內提前固化→堵針；人員 UV 曝露", mon:"UV 強度抽測；防護目鏡／手套"},
+ {cat:"安全防護", name:"局部排氣／氣罩", spec:"列管有機溶劑／特化物質發生源設氣罩；控制風速：包圍型 ≥0.4、外裝側邊 ≥0.5 m/s；設計須合格專業人員出具報告書", risk:"人員暴露、法規違反", mon:"年度定期自動檢查＋風速量測"},
+ {cat:"安全防護", name:"防爆設施", spec:"Primer／溶劑區防爆電氣、接地、防爆櫃儲存；隔離火源", risk:"易燃蒸氣爆炸／火災", mon:"可燃氣體偵測器"},
+ {cat:"靜電控制", name:"ESD 靜電控制", spec:"接地手環、防靜電地板／桌墊；濕度 ≥40 %RH 輔助", risk:"靜電擊穿電子件；粉塵吸附膠面", mon:"表面電阻定期量測"},
+ {cat:"廠務設施", name:"廠務氣源 CDA", spec:"露點 ≤-40°C、過濾 0.01 µm、無油；壓力穩定 ±0.1 bar", risk:"氣壓波動→膠量漂移；水氣／油氣→濕氣膠提前固化、汙染", mon:"露點計、壓力記錄"},
+ {cat:"廠務設施", name:"照明與檢測光源", spec:"檢測區 ≥1000 lux；UV 膠區用無 UV 成分光源", risk:"對比不足漏檢；含 UV 光源使 UV 膠提前固化", mon:"照度計定期量測"},
+ {cat:"監控記錄", name:"溫濕度連續監控", spec:"data logger 連續記錄並上傳 MES；超限告警＋處置 SOP", risk:"異常無法追溯；批次性不良無從歸因", mon:"監控系統告警＋月報"}
+];
+const POTTING = [
+ {step:"1. 膠材前處理（回溫／脫泡）", key:"A／B 桶加溫至 60±2°C；真空脫泡 -90～-95 kPa、4Hrs（高黏度延長）", defect:"氣泡殘留、黏度漂移", tool:"真空脫泡機／攪拌脫泡機"},
+ {step:"2. A／B 計量混合", key:"重量比依 TDS，容差 ±2%；靜態混合管依 TDS 選定；首件 Shore 硬度抽測＋色差驗證；比例報警連鎖停機", defect:"混合不均→局部不固化、硬度不均", tool:"雙液計量機、靜態混合管"},
+ {step:"3. 真空灌注 vs 常壓灌注選擇", key:"深腔／密繞線圈／間隙 <0.5 mm → 真空灌注 ≤5 mbar；一般外殼 → 常壓＋路徑規劃；試灌切片驗證浸潤", defect:"內部殘泡、線圈浸潤不足", tool:"真空灌膠機、真空腔體"},
+ {step:"4. 澆注路徑規劃", key:"單點低位注入、液面自下而上推進排氣；避免直沖元件與細線；沿壁導流；分段降速", defect:"捲氣、元件位移", tool:"機器人路徑／治具導流"},
+ {step:"5. 分層灌注（厚截面）", key:"Epoxy 單次混合 <200 g 防放熱；厚層每層 ≤10 mm；層間待凝膠再灌；分層＋溫度監控", defect:"放熱開裂、燙傷；厚層起泡膨脹", tool:"大體積改低放熱配方"},
+ {step:"6. 液面高度控制", key:"重量法 ±1% 或雷射液位計；設溢膠／缺膠上下限；首件標定基準高度", defect:"溢膠汙染、缺膠露件", tool:"秤重模組、雷射位移計"},
+ {step:"7. 凝膠／初固管制", key:"Gel time 內禁振動搬運；浮力元件用治具壓持；排程避開振動源", defect:"元件浮起、位移", tool:"恆溫平台、壓持治具"},
+ {step:"8. 後固化（爐固）", key:"依 TDS 爐溫曲線（典型 60～80°C、1～2 hr）；RTV 深部固化 24～72 hr；工件耐溫檢討（DFA）", defect:"未完全固化、工件熱損", tool:"烘箱／隧道爐；固化度 DSC 抽驗"},
+ {step:"9. 氣泡／缺陷檢查", key:"目視＋AOI；車規／高可靠度用 X-ray 或切片抽檢；透明膠背光檢查；氣泡尺寸／位置判定等級；首件 FAI", defect:"內部氣泡漏檢", tool:"AOI、X-ray"},
+ {step:"10. 換型與清洗", key:"AB 停機 >30% pot life 清管／>50% 換混合管；清洗劑與膠材／管路相容性確認；換型 checklist", defect:"堵管、交叉汙染", tool:"溶劑清洗站、拋棄式混合管"}
+];
+const QUALITY = [
+ {cat:"出膠量檢測", name:"重量法", desc:"電子天平定期秤重（首件＋週期性），建 CPK"},
+ {cat:"出膠量檢測", name:"視覺 AOI", desc:"膠徑／膠寬／斷膠／溢膠檢出；2D 面積換算"},
+ {cat:"出膠量檢測", name:"3D 線雷射", desc:"膠高／體積量測（TIM／灌封關鍵）"},
+ {cat:"出膠量檢測", name:"漏點檢測", desc:"雷射測高，防空點"},
+ {cat:"常見缺陷對策", name:"拉絲", desc:"回吸量／抬升速度／溫度調整；針尖防沾塗層"},
+ {cat:"常見缺陷對策", name:"滴膠", desc:"回吸（suck-back）／閥座密封檢查／止膠確認"},
+ {cat:"常見缺陷對策", name:"氣泡", desc:"供料脫泡（離心／真空）／轉填管制／料管排氣"},
+ {cat:"常見缺陷對策", name:"堵針", desc:"ID≥d50×10／定期換針／停機清洗 SOP（CA 停機>20s 即清洗）"},
+ {cat:"常見缺陷對策", name:"膠量漂移", desc:"恆溫控制／壓力監控／改定量閥"},
+ {cat:"清洗與保養", name:"停機策略", desc:"AB 膠停機>Pot life 30% 清管／>50% 防堵管"},
+ {cat:"清洗與保養", name:"換針週期", desc:"依膠材反應性定義（CA 每班／一般每日）"},
+ {cat:"清洗與保養", name:"閥保養", desc:"密封件定期更換；壓電閥定期校驗 Hz；螺桿閥填料磨耗檢查"},
+ {cat:"清洗與保養", name:"校正", desc:"膠重校正曲線；壓力計／溫度計定期校正"}
+];
+const PRESETS = [
+ {label:"AB 環氧灌封", scenario:"potting", family:"Epoxy", visc:80000, mix:"dual", expectValve:["AB 混合螺桿閥","AB 雙液氣壓推桿"]},
+ {label:"PUR 膠 → 加熱閥", scenario:"bond", family:"PUR 熱熔", visc:10000, expectValve:["PUR 加熱閥"]},
+ {label:"導熱膠 → 螺桿閥", scenario:"tim", family:"導熱膠 TIM", visc:300000, expectValve:["螺桿閥"]},
+ {label:"UV 非接觸微點", scenario:"microjet", family:"UV 膠", visc:3000, precision:"micro", contact:"noncontact", expectValve:["壓電噴射閥"]},
+ {label:"CA 瞬間膠", scenario:"general", family:"CA 瞬間膠", visc:500, expectValve:["隔膜閥"]},
+ {label:"厭氧膠", scenario:"general", family:"厭氧膠", visc:1000, expectValve:["隔膜閥"], expectNeedle:"PP"},
+ {label:"低黏＋高壓（驗證警告）", scenario:"general", family:"UV 膠", visc:500, pressure:3, expectWarn:"滴漏"},
+ {label:"錫膏 500k", scenario:"", family:"錫膏", visc:200000, expectValve:["螺桿閥"]}
+];
+</script>
+<script>
+// ================= 共用 =================
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function fmt(n){return n>=1000000?(n/1000000)+"M":n>=1000?(n/1000)+"k":String(n)}
+
+// 頁籤
+$("#tabs").addEventListener("click",e=>{
+  const b=e.target.closest(".tab-btn"); if(!b)return;
+  $$(".tab-btn").forEach(x=>x.classList.toggle("active",x===b));
+  $$(".panel").forEach(p=>p.classList.toggle("active",p.id==="panel-"+b.dataset.tab));
+});
+// segmented control
+function segValue(id){const on=$("#"+id+" button.on");return on?on.dataset.v:null}
+function segSet(id,v){$$("#"+id+" button").forEach(b=>b.classList.toggle("on",b.dataset.v===v))}
+$$(".seg").forEach(seg=>seg.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  seg.querySelectorAll("button").forEach(x=>x.classList.remove("on")); b.classList.add("on");
+}));
+
+// 下拉初始化
+SCENARIOS.forEach(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=s.name;$("#inp-scenario").appendChild(o)});
+function refreshFamilyOptions(){
+  const sc=SCENARIOS.find(s=>s.id===$("#inp-scenario").value);
+  const cur=$("#inp-family").value;
+  $("#inp-family").innerHTML='<option value="">不指定（依情境自動縮小）</option>';
+  FAMILIES.forEach(f=>{
+    const o=document.createElement("option");o.value=f.name;
+    const tag=sc&&sc.families.includes(f.name)?"【建議】":"";
+    o.textContent=tag+f.name+"（"+fmt(f.visc[0])+"–"+fmt(f.visc[1])+" cps）";
+    $("#inp-family").appendChild(o);
+  });
+  if([...$("#inp-family").options].some(o=>o.value===cur))$("#inp-family").value=cur;
+  $("#family-hint").textContent=sc?("情境建議："+sc.glue):"";
+}
+$("#inp-scenario").addEventListener("change",refreshFamilyOptions);
+refreshFamilyOptions();
+
+// ================= 選型引擎 =================
+function gaugeByVisc(v){
+  if(v<1000)return"27–30G 精密針（極微量 32–34G）";
+  if(v<=5000)return"22–25G";
+  if(v<=20000)return"20–23G";
+  if(v<=100000)return"18–20G（18–22G）";
+  return"14–16G／錐形";
+}
+function pickNeedles(family,visc,contact,twoPart){
+  const list=[];const f=family||{flags:{}};
+  if(f.flags&&f.flags.sprayOnly)return[{name:"不走針頭（噴霧閥霧化）",why:"Primer／Activator 採噴霧閥，不使用針頭"}];
+  if(f.flags&&f.flags.heatedPath)return[{name:"全金屬加熱針（14–23G）",why:"PUR 硬規則：禁塑膠，強制全金屬加熱針＋加熱閥"}];
+  if(twoPart)list.push({name:"靜態混合管（必配）",why:"雙劑膠水鐵則：必須搭配拋棄式靜態混合管"});
+  if(f.flags&&f.flags.noMetal){
+    list.push({name:"PP／PE 塑膠針（"+gaugeByVisc(visc)+" 同規格）",why:"CA／厭氧禁金屬接液，改用 PP 同規格"});
+    list.push({name:"PTFE 內襯針",why:"反應性膠材抗附著備選"});
+    return list;
+  }
+  if(f.flags&&f.flags.filler){
+    list.push({name:"錐形塑膠針（寶塔）＋ ID ≥ d50×10",why:"含填料：低流阻、防填料分離（氣壓 80→30 psi）"});
+    list.push({name:"PTFE 內襯針",why:"抗磨耗、低附著"});
+  }
+  if(f.flags&&f.flags.uvShield)list.push({name:"遮光針（黑／琥珀）"+(visc?"，"+gaugeByVisc(visc):""),why:"UV 膠禁透明針，需 100% 遮光防針內固化"});
+  if(!list.length)list.push({name:"標準金屬直針 "+gaugeByVisc(visc),why:"依黏度→Gauge 分域原則（BTek 針規表）"});
+  if(contact==="noncontact")list.push({name:"Micro Tip／噴射閥專用嘴",why:"非接觸噴射應用"});
+  return list.slice(0,3);
+}
+function pickFeeding(family,visc,precision,twoPart){
+  const f=family||{flags:{}};
+  if(twoPart)return FEEDING[1];
+  if(f.flags&&f.flags.noMetal)return FEEDING[0];
+  if(precision==="bulk")return visc>100000?FEEDING[6]:FEEDING[2];
+  if(visc>100000)return FEEDING[3];
+  return FEEDING[5];
+}
+function runEngine(input){
+  // input: {scenarioId, familyName, visc, pressure, heated, precision, contact, mix}
+  const sc=SCENARIOS.find(s=>s.id===input.scenarioId)||null;
+  const fam=FAMILIES.find(f=>f.name===input.familyName)||null;
+  const visc=input.visc||null;
+  const effVisc=visc?(input.heated?visc/5:visc):null;
+  const warnings=[],infos=[];
+  if(visc&&fam&&(visc<fam.visc[0]||visc>fam.visc[1]))
+    warnings.push({lv:"orange",text:"輸入黏度 "+fmt(visc)+" cps 超出「"+fam.name+"」典型黏度域（"+fmt(fam.visc[0])+"–"+fmt(fam.visc[1])+" cps），請確認 TDS。"});
+  if(effVisc&&effVisc>500000)
+    warnings.push({lv:"red",text:"【硬篩排除】黏度 > 500,000 cps：進入專案評估，不給標準答案。"});
+  if(effVisc&&effVisc>50000)
+    warnings.push({lv:"orange",text:"【中風險】黏度 > 50,000 cps：出膠延遲、拉絲風險，建議加熱降黏或螺桿／柱塞類。"});
+  if(visc&&visc<1000&&input.pressure&&input.pressure>0.5)
+    warnings.push({lv:"red",text:"【高風險】低黏（<1,000 cps）＋高壓（>0.5 bar）：滴漏／飛濺高風險，降壓或改噴射／針閥＋回吸。"});
+  const twoPart=input.mix==="dual";
+  if(twoPart)infos.push("【鐵則】雙劑膠水僅推薦：AB 螺桿閥／AB 混合閥／AB 氣壓推桿，其餘閥型一律排除（反之單劑膠水不得使用 AB 閥體）；且必須搭配靜態混合管（依 Pot life 管制更換）。");
+  if(fam&&!twoPart)infos.push("【鐵則】單劑膠水不得使用 AB 閥體（AB 螺桿閥／AB 混合閥／AB 氣壓推桿）；中高黏度定量需求請用單液螺桿閥。");
+  if(twoPart&&fam&&fam.name!=="Epoxy")warnings.push({lv:"orange",text:"【注意】「"+fam.name+"」無雙液型態，雙液（AB）僅適用 Epoxy；以下仍依雙液鐵則僅推薦 AB 閥體。"});
+  if(input.tol)infos.push("精度評估：目標膠量誤差 ±"+input.tol+"%，已排除最佳精度仍超出目標的閥型；典型區間跨越目標者標為邊際。");
+  if(fam&&fam.hs&&fam.hs.lv==="強制")warnings.push({lv:"red",text:"【HS 強制】"+fam.name+"："+fam.hs.hazard+"。選型前必須完成氣罩評估並設局部抽氣（"+fam.hs.control+"）。"});
+  else if(fam&&fam.hs&&fam.hs.lv==="條件")warnings.push({lv:"orange",text:"【HS 條件】"+fam.name+"："+fam.hs.hazard+"。請依 SDS 確認是否需氣罩／局部抽氣。"});
+  if(input.heated&&visc)infos.push("已套用加熱降黏：有效黏度 ≈ "+fmt(visc)+" ÷ 5 = "+fmt(Math.round(effVisc))+" cps（恆溫 20–25°C 或程式化多組溫度參數）。");
+  const flags=fam?fam.flags||{}:{};
+  const results=[];
+  VALVES.forEach(v=>{
+    const reasons=[],excl=[];
+    // 硬排除
+    if(fam){
+      if(flags.noMetal&&!v.noMetalSafe)excl.push("CA／厭氧禁金屬接液 → 僅隔膜閥（PP 流道）");
+      if(flags.heatedPath&&!v.purOnly)excl.push("PUR 需全程加熱路徑 → 僅 PUR 加熱閥");
+      if(!flags.heatedPath&&v.purOnly)excl.push("PUR 加熱閥僅限 PUR");
+      if(flags.sprayOnly&&v.name!=="噴霧閥")excl.push("Primer／Activator 走噴霧閥");
+      if(flags.noDiaphragm&&v.name==="隔膜閥")excl.push("錫膏排除隔膜閥");
+    }
+    if(twoPart&&!(v.abOnly||v.abCapable))excl.push("【鐵則】雙劑膠水僅推薦 AB 螺桿閥／AB 混合閥／AB 氣壓推桿");
+    if(!twoPart&&v.abOnly)excl.push("【鐵則】單劑膠水不得使用 AB 閥體（無混合需求，雙料道膠路殘留）→ 改用單液螺桿閥／定量閥");
+    if(twoPart&&v.singleOnly)excl.push("單液螺桿閥無混合功能，雙劑需 AB 混合螺桿閥");
+    if(input.tol&&v.tol&&v.tol[0]>input.tol)excl.push("精度誤差 ±"+v.tol[0]+"～"+v.tol[1]+"% 無法達成目標 ±"+input.tol+"%");
+    if(input.contact==="noncontact"&&v.contact==="接觸式")excl.push("需非接觸 → 排除純接觸式");
+    if(effVisc&&v.window){
+      let hi=v.window[1]; if(v.hiViscCap)hi=v.hiViscCap;
+      if(effVisc<v.window[0]||effVisc>hi)excl.push("有效黏度 "+fmt(Math.round(effVisc))+" cps 超出黏度區間範圍 "+fmt(v.window[0])+"–"+fmt(hi)+" cps");
+    }
+    if(excl.length){results.push({valve:v,excluded:true,why:excl});return}
+    // 評分
+    let score=0;
+    if(fam&&v.materials.includes(fam.name)){score+=40;reasons.push("適用膠材含「"+fam.name+"」（+40）")}
+    else if(fam&&v.positive){score+=25;reasons.push("定量閥：體積計量，廣泛相容（+25）")}
+    else if(fam){score+=5;reasons.push("非典型配對，僅供備選（+5）")}
+    else{score+=20;reasons.push("未指定膠材，以條件篩選（+20）")}
+    if(sc&&sc.valve.includes(v.name.slice(0,3))){score+=20;reasons.push("情境「"+sc.name+"」建議閥型（+20）")}
+    if(input.precision==="micro"){
+      if(v.precision.includes("高精度")){score+=20;reasons.push("支援微量高精度（+20）")}else{score-=15;reasons.push("精度等級不足微量需求（−15）")}
+    }else if(input.precision==="bulk"){
+      if(["螺桿閥","柱塞閥","AB 混合螺桿閥","定量閥"].includes(v.name)){score+=15;reasons.push("適合大膠量連續（+15）")}
+    }else if(input.precision==="normal"&&v.precision.includes("一般")){score+=8;reasons.push("符合一般點／線需求（+8）")}
+    if(input.contact==="noncontact"&&v.contact==="非接觸式"){score+=12;reasons.push("非接觸式符合限制（+12）")}
+    if(input.tol&&v.tol){if(v.tol[1]<=input.tol){score+=10;reasons.push("精度誤差 ±"+v.tol[0]+"～"+v.tol[1]+"% 全區間達標（+10）")}else{reasons.push("精度誤差 ±"+v.tol[0]+"～"+v.tol[1]+"% 邊際：需選高階型號並以 DOE 驗證")}}
+    if(effVisc&&v.window){
+      const lo=Math.log10(v.window[0]),hi=Math.log10(v.hiViscCap||v.window[1]),x=Math.log10(effVisc);
+      const fit=1-Math.abs(((x-lo)/(hi-lo))-0.5)*2;
+      const pts=Math.round(fit*10); score+=pts; if(pts>=6)reasons.push("黏度落在區間範圍理想區（+"+pts+"）");
+    }
+    if(v.positive){reasons.push("單體成本高：適用 CPK／車規／醫療嚴格場合")}
+    results.push({valve:v,excluded:false,score:Math.max(score,1),reasons});
+  });
+  const passed=results.filter(r=>!r.excluded).sort((a,b)=>b.score-a.score).slice(0,5);
+  const excluded=results.filter(r=>r.excluded);
+  const needles=pickNeedles(fam,effVisc||10000,input.contact,twoPart);
+  const feeding=pickFeeding(fam,effVisc||10000,input.precision,twoPart);
+  // 堵針規則
+  if(effVisc&&(effVisc>100000||flags.filler))infos.push("【堵針防範】ID < 0.8 mm 且高黏／含填料為高風險：放大 ID 或改錐形針；含填料 ID ≥ d50×10（嚴格看 d90）。");
+  return {sc,fam,visc,effVisc,warnings,infos,passed,excluded,needles,feeding,twoPart};
+}
+
+// ================= 結果渲染 =================
+function warnBox(lv,text){const cls={red:"warn-red",orange:"warn-orange",blue:"warn-blue",green:"warn-green"}[lv];const dc={red:"d-red",orange:"d-orange",blue:"d-gray",green:"d-green"}[lv];return '<div class="warn-box '+cls+'"><span class="dot '+dc+'"></span><span>'+esc(text)+'</span></div>'}
+function renderResult(r){
+  const risk=r.warnings.some(w=>w.lv==="red")?{t:"NG",c:"d-red"}:r.warnings.length?{t:"Warning",c:"d-orange"}:{t:"OK",c:"d-green"};
+  const best=r.passed.length?r.passed[0].valve.name:"—";
+  const mc='<div class="metrics">'
+    +'<div class="metric"><div class="m-label">候選閥型</div><div class="m-value">'+r.passed.length+'</div></div>'
+    +'<div class="metric"><div class="m-label">最佳閥型</div><div class="m-value m-sm">'+esc(best)+'</div></div>'
+    +'<div class="metric"><div class="m-label">有效黏度</div><div class="m-value">'+(r.effVisc?fmt(Math.round(r.effVisc))+' cps':'—')+'</div></div>'
+    +'<div class="metric"><div class="m-label">風險判定</div><div class="m-value m-status"><span class="dot '+risk.c+'"></span>'+risk.t+'</div></div>'
+    +'</div>';
+  let h=mc+'<div class="card"><h2>推薦結果（Top 5）</h2>';
+  const cond=[];
+  if(r.sc)cond.push("情境："+r.sc.name); if(r.fam)cond.push("膠材："+r.fam.name);
+  if(r.visc)cond.push("工作黏度："+fmt(r.visc)+" cps"+(r.effVisc!==r.visc?"（有效 "+fmt(Math.round(r.effVisc))+"）":""));
+  cond.push("型態："+(r.twoPart?"雙液（AB）":"單液"));
+  h+='<p class="hint">'+esc(cond.join("｜")||"未輸入條件")+'</p>';
+  r.warnings.forEach(w=>h+=warnBox(w.lv,w.text));
+  r.infos.forEach(t=>h+=warnBox("blue",t));
+  if(!r.passed.length){h+='<div class="empty">所有閥型皆被硬排除，請檢視排除原因或調整條件。</div>'}
+  r.passed.forEach((p,i)=>{
+    const v=p.valve;
+    h+='<div class="result-card'+(i===0?' top1':'')+'"><div class="rc-head"><span class="rank">'+(i+1)+'</span><h3>'+esc(v.name)+'</h3>';
+    h+='<span class="badge b-gray">'+esc(v.contact)+'</span><span class="badge b-gray">'+esc(v.precision.join("／"))+'</span>'+(v.tol?'<span class="badge b-gray">誤差 ±'+v.tol[0]+'～'+v.tol[1]+'%</span>':'');
+    h+='<span class="badge b-dark">適配 '+p.score+' 分</span></div>';
+    h+='<div class="score-bar"><i style="width:'+Math.min(100,p.score)+'%"></i></div>';
+    h+='<div class="rc-meta">黏度區間範圍：'+(v.window?fmt(v.window[0])+"–"+fmt(v.window[1])+" cps"+(v.hiViscCap?"（高黏型 ≤ "+fmt(v.hiViscCap)+"）":""):"依型號（體積計量）")+'｜適用膠材：'+esc(v.materials.join("、"))+'</div>';
+    h+='<ul class="rc-reasons">'+p.reasons.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>';
+    if(v.note&&v.note!=="—")h+='<div style="margin-top:8px">'+warnBox("orange","注意："+v.note)+'</div>';
+    h+='</div>';
+  });
+  // 配套建議
+  h+='<div class="section-title">配套建議（針頭 × 供料 × HS）</div><div class="grid grid-3">';
+  h+='<div class="result-card" style="margin:0"><b>針頭建議</b><ul class="rc-reasons" style="margin-top:6px">'+r.needles.map(n=>'<li><b>'+esc(n.name)+'</b><br><span class="kv">'+esc(n.why)+'</span></li>').join("")+'</ul></div>';
+  h+='<div class="result-card" style="margin:0"><b>供料系統建議</b><div style="margin-top:6px;font-size:13.5px"><b>'+esc(r.feeding.name)+'</b><br><span class="kv">容量：'+esc(r.feeding.cap)+'<br>'+esc(r.feeding.note)+'</span></div></div>';
+  h+='<div class="result-card" style="margin:0'+(r.fam&&r.fam.hs&&r.fam.hs.lv==="強制"?';border-left:4px solid var(--ng)':'')+'"><b>HS 氣罩評估</b><div style="margin-top:6px;font-size:13.5px">'+(r.fam?('<b>'+esc(r.fam.hood)+'</b>'+(r.fam.hs?'<br><span class="kv">危害來源：'+esc(r.fam.hs.hazard)+'</span><br><span class="kv">控制措施：'+esc(r.fam.hs.control)+'</span>':'')+'<br><span class="kv">選型鐵則：'+esc(r.fam.rule)+'</span>'):'<span class="kv">未指定膠材，請依 SDS 評估（法規：有機溶劑預防規則／特化標準附表一）</span>')+'</div></div>';
+  h+='</div>';
+  if(r.excluded.length){
+    h+='<details style="margin-top:14px"><summary style="cursor:pointer;font-size:14px;font-weight:600">已排除閥型（'+r.excluded.length+'）與原因</summary><div style="margin-top:8px">';
+    r.excluded.forEach(e=>{h+='<div class="test-row"><span class="badge b-red">排除</span><div><b>'+esc(e.valve.name)+'</b><br><span class="kv">'+e.why.map(esc).join("；")+'</span></div></div>'});
+    h+='</div></details>';
+  }
+  h+='<p class="hint" style="margin-top:14px">推薦僅做基礎篩選與排序。量產參數請以 DOE（3 壓力 × 3 時間 × 3 重複稱重）實測建立，目標 CV% ≤ 3%、Cpk ≥ 1.33。</p></div>';
+  return h;
+}
+function gatherInput(){
+  return {scenarioId:$("#inp-scenario").value, familyName:$("#inp-family").value,
+    visc:parseFloat($("#inp-visc").value)||null, pressure:parseFloat($("#inp-pressure").value)||null, tol:parseFloat($("#inp-tol").value)||null,
+    heated:segValue("seg-heat")==="yes", precision:segValue("seg-precision"), contact:segValue("seg-contact"), mix:segValue("seg-mix")||"single"};
+}
+$("#btn-run").addEventListener("click",()=>{
+  const r=runEngine(gatherInput());
+  $("#result-area").innerHTML=renderResult(r);
+  $("#result-area").scrollIntoView({behavior:"smooth",block:"start"});
+});
+$("#btn-reset").addEventListener("click",()=>{
+  $("#inp-scenario").value="";refreshFamilyOptions();$("#inp-family").value="";
+  $("#inp-visc").value="";$("#inp-pressure").value="";$("#inp-tol").value="";
+  segSet("seg-heat","no");segSet("seg-precision","any");segSet("seg-contact","any");segSet("seg-mix","single");
+  $("#result-area").innerHTML='<div class="card"><p class="hint" style="margin:0">輸入左側條件後按「產生推薦」，此處顯示指標卡、Top 5 推薦閥型與針頭／供料／HS 配套建議。</p></div>';
+});
+$("#btn-print").addEventListener("click",()=>window.print());
+
+// ================= 資料庫系統 =================
+const NEEDLE_SPECS=[
+ {g:"14G",id:"1.60",od:"2.11",band:"> 100k cps（14–16G／錐形）"},
+ {g:"15G",id:"1.37",od:"1.83",band:"> 100k cps"},
+ {g:"16G",id:"1.19",od:"1.65",band:"> 100k cps（14–16G）"},
+ {g:"17G",id:"1.07",od:"1.47",band:"高黏（16–18G 之間）"},
+ {g:"18G",id:"0.84",od:"1.27",band:"20k–100k cps（18–20G）"},
+ {g:"19G",id:"0.69",od:"1.07",band:"20k–100k cps"},
+ {g:"20G",id:"0.60",od:"0.91",band:"20k–100k cps（18–20G）"},
+ {g:"21G",id:"0.51",od:"0.82",band:"5k–20k cps"},
+ {g:"22G",id:"0.41",od:"0.72",band:"5k–20k cps（20–23G）"},
+ {g:"23G",id:"0.33",od:"0.64",band:"5k–20k cps（20–23G）"},
+ {g:"25G",id:"0.26",od:"0.51",band:"1k–5k cps（22–25G）"},
+ {g:"27G",id:"0.21",od:"0.41",band:"< 1k cps（27–30G）"},
+ {g:"30G",id:"0.16",od:"0.31",band:"< 1k cps（27–30G）"},
+ {g:"32G",id:"0.10",od:"0.24",band:"極微量（32–34G）"},
+ {g:"34G",id:"0.08",od:"0.19",band:"極微量（32–34G）"}
+];
+const DBS=[
+ {key:"scenario",label:"應用情境（11）",cols:["情境","常用膠材","建議閥型","建議針頭"],rows:SCENARIOS.map(s=>[s.name,s.glue,s.valve,s.needle]).concat([["決策邏輯","情境 → 膠材候選清單（【建議】標註）","—","—"]])},
+ {key:"family",label:"膠材家族（12）",cols:["膠材","黏度域","選型鐵則","針頭材質限制","HS 氣罩評估"],rows:FAMILIES.map(f=>[f.name,fmt(f.visc[0])+"–"+fmt(f.visc[1])+" cps",f.rule,f.needleLimit,f.hood])},
+ {key:"hs",label:"HS 氣罩評估（12）",cols:["膠材","HS 等級","危害來源","控制措施","DFA 連動"],rows:FAMILIES.slice().sort((a,b)=>["強制","條件","建議"].indexOf(a.hs.lv)-["強制","條件","建議"].indexOf(b.hs.lv)).map(f=>[f.name,f.hs.lv,f.hs.hazard,f.hs.control,f.hs.lv==="強制"?"強制項：氣罩評估與局部抽氣"+(f.flags.flammable?"＋易燃防爆":""):"條件項：HS 揮發物／致敏性評估"])},
+ {key:"valve",label:"膠閥（12）",cols:["閥型","分類","黏度區間範圍","接觸方式","精度","精度誤差（±%）","膠材限制","適用膠材","注意"],rows:VALVES.map(v=>[v.name,v.group,v.window?fmt(v.window[0])+"–"+fmt(v.window[1])+" cps"+(v.hiViscCap?"（高黏型 ≤"+fmt(v.hiViscCap)+"）":""):"依型號（體積計量）",v.contact,v.precision.join("／"),v.tol?"±"+v.tol[0]+"～"+v.tol[1]+"%":"—",v.abOnly?"僅限雙劑":(v.singleOnly?"僅限單劑":(v.purOnly?"僅限 PUR":"單劑")),v.materials.join("、"),v.note])},
+ {key:"needle",label:"針頭（11）",cols:["針頭","Gauge／ID","材質","適用黏度","禁用","注意"],rows:NEEDLES.map(n=>[n.name,n.gauge,n.mat,n.visc,n.ban,n.note])},
+ {key:"nspec",label:"針頭規格（15）",cols:["Gauge","內徑 ID（mm）","外徑 OD（mm）","建議黏度分域"],rows:NEEDLE_SPECS.map(n=>[n.g,n.id,n.od,n.band])},
+ {key:"feeding",label:"供料系統（7）",cols:["方式","容量","適用","攪拌／脫泡","注意","適用情境"],rows:FEEDING.map(f=>[f.name,f.cap,f.visc,f.deair,f.note,f.use])},
+ {key:"risk",label:"風險規則（16）",cols:["等級","類別","規則","條件／門檻","後果／處置"],rows:RISK_RULES.map(r=>[r.lv,r.cat,r.name,r.cond,r.act])},
+ {key:"dfa",label:"DFA 檢查（"+DFA_ITEMS.length+"）",cols:["類別","等級","項目","判定基準","觸發條件"],rows:DFA_ITEMS.map(d=>[d.cat,d.lv,d.name,d.basis,d.trig])},
+ {key:"fail",label:"失效案例（9）",cols:["失效","根因","相關膠材／條件","DFA 防線"],rows:FAILURES.map(f=>[f.name,f.cause,f.mat,f.dfa])},
+ {key:"incoming",label:"來料處理（10）",cols:["階段","項目","規範","違反風險","判定／記錄","適用膠材"],rows:INCOMING.map(i=>[i.stage,i.name,i.rule,i.risk,i.rec,i.mat])},
+ {key:"env",label:"製程環境（10）",cols:["類別","項目","建議規格","影響／風險","監控"],rows:ENVIRONMENT.map(e=>[e.cat,e.name,e.spec,e.risk,e.mon])},
+ {key:"potting",label:"灌封製程（10 階段）",cols:["階段","關鍵參數","常見缺陷","設備／工具"],rows:POTTING.map(p=>[p.step,p.key,p.defect,p.tool])},
+ {key:"quality",label:"品質檢測與保養",cols:["類別","項目","內容"],rows:QUALITY.map(q=>[q.cat,q.name,q.desc])}
+];
+if($("#db-total"))$("#db-total").textContent=DBS.length;
+let curDb=DBS[2]; // 預設膠閥
+function renderDbNav(){
+  $("#db-nav").innerHTML="";
+  DBS.forEach(db=>{const b=document.createElement("button");b.textContent=db.label;b.classList.toggle("on",db===curDb);
+    b.addEventListener("click",()=>{curDb=db;$("#db-search").value="";renderDbNav();renderDbTable()});
+    $("#db-nav").appendChild(b)});
+}
+function badgeFor(text){
+  if(/^(高|強制高風險)$/.test(text))return '<span class="badge b-red">'+esc(text)+'</span>';
+  if(text==="中"||text==="條件")return '<span class="badge b-orange">'+esc(text)+'</span>';
+  if(text==="低"||text==="建議")return '<span class="badge b-gray">'+esc(text)+'</span>';
+  if(/^(強制|強烈建議)$/.test(text))return '<span class="badge b-red">'+esc(text)+'</span>';
+  return esc(text);
+}
+function renderDbTable(){
+  const q=($("#db-search").value||"").trim().toLowerCase();
+  const rows=curDb.rows.filter(r=>!q||r.join(" ").toLowerCase().includes(q));
+  let h='<table><thead><tr>'+curDb.cols.map(c=>'<th>'+esc(c)+'</th>').join("")+'</tr></thead><tbody>';
+  if(!rows.length)h+='<tr><td colspan="'+curDb.cols.length+'"><div class="empty">無符合「'+esc(q)+'」的資料</div></td></tr>';
+  rows.forEach(r=>{h+='<tr>'+r.map((c,i)=>'<td>'+((curDb.key==="risk"&&i===0)||(curDb.key==="dfa"&&i===1)?badgeFor(c):esc(c))+'</td>').join("")+'</tr>'});
+  h+='</tbody></table>';
+  $("#db-table").innerHTML=h;
+  $("#db-count").textContent=rows.length+" / "+curDb.rows.length+" 筆";
+}
+$("#db-search").addEventListener("input",renderDbTable);
+renderDbNav();renderDbTable();
+
+// ================= 工程計算 =================
+function calcFlow(id_mm,len_mm,dp_bar,visc_cps,t_s,cd){
+  // Hagen–Poiseuille：Q0 = π r^4 ΔP / (8 μ L)，SI 單位
+  const r=(id_mm/1000)/2, L=len_mm/1000, dP=dp_bar*1e5, mu=visc_cps/1000;
+  const Q0=Math.PI*Math.pow(r,4)*dP/(8*mu*L); // m3/s
+  const Q0mL=Q0*1e6, QmL=Q0mL*cd;
+  const vAvg=Q0/(Math.PI*r*r)*1000;            // mm/s 平均流速
+  const shear=4*Q0/(Math.PI*Math.pow(r,3));    // 1/s 壁面剪切率（牛頓）
+  const Re=1100*(vAvg/1000)*(id_mm/1000)/mu;   // 密度取 1,100 kg/m3
+  return {Q0mL,QmL,V:QmL*t_s,vAvg,shear,Re};
+}
+(function(){
+  const gs=$("#c-gauge");
+  gs.innerHTML='<option value="">自填（手動輸入 ID）</option>'+NEEDLE_SPECS.map(n=>'<option value="'+n.id+'">'+n.g+'｜ID '+n.id+'／OD '+n.od+' mm</option>').join("");
+  gs.value="0.60";
+  gs.addEventListener("change",()=>{if(gs.value)$("#c-id").value=gs.value;});
+  const ls=$("#c-len-sel");
+  ls.innerHTML='<option value="">自填（手動輸入長度）</option><option value="6.35">6.35 mm（1/4 吋）</option><option value="12.7">12.7 mm（1/2 吋）</option><option value="25.4">25.4 mm（1 吋）</option><option value="38.1">38.1 mm（1.5 吋）</option>';
+  ls.value="12.7";
+  ls.addEventListener("change",()=>{if(ls.value)$("#c-len").value=ls.value;});
+})();
+$("#btn-calc").addEventListener("click",()=>{
+  const ID=+$("#c-id").value,L=+$("#c-len").value,dP=+$("#c-dp").value,mu=+$("#c-visc").value,t=+$("#c-t").value,cd=+$("#c-cd").value;
+  if(!(ID>0&&L>0&&dP>0&&mu>0&&t>0&&cd>0)){$("#calc-out").hidden=false;$("#calc-out").innerHTML=warnBox("orange","請確認 ID、L、ΔP、μ、t、Cd 皆為大於 0 的數值。");return}
+  const o=calcFlow(ID,L,dP,mu,t,cd);
+  const f3=x=>x.toPrecision(3);
+  let h='理論流量 Q₀ = <b>'+f3(o.Q0mL)+' mL/s</b>｜修正流量 Q = Q₀×Cd = <b>'+f3(o.QmL)+' mL/s</b>｜單點膠量 V = Q×t = <b>'+f3(o.V)+' mL</b>（≈ '+f3(o.V*1000)+' μL，≈ '+f3(o.V*1000*1.1)+' mg @密度 1.1）';
+  if(o.QmL<0.0025)h+=warnBox("red","【強制高風險】修正流量 < 0.0025 mL/s：幾乎不出膠／延遲。請放大 ID（最有效，Q ∝ ID⁴）、升壓、加熱降黏、縮短針長或改閥型。");
+  else h+=warnBox("green","修正流量高於 0.0025 mL/s 下限，通過硬篩。非牛頓流體請以下方剪切率對應的表觀黏度重算，並以 DOE 實測校正 Cd。");
+  // 輔助指標
+  h+='<div class="sec">輔助指標（驗證模型適用性）</div><table><tbody>';
+  h+='<tr><td>壁面剪切率 γ̇ = 4Q₀/(πr³)</td><td><b style="font-size:14px">'+f3(o.shear)+' s⁻¹</b></td><td>黏度應取 TDS 中接近此剪切率的數值；若只有低剪切（如 Brookfield 10 rpm）數據，剪切變稀膠材實際流量會偏高</td></tr>';
+  h+='<tr><td>針内平均流速</td><td><b style="font-size:14px">'+f3(o.vAvg)+' mm/s</b></td><td>對應針長 '+L+' mm 的滞留時間 ≈ '+f3(L/o.vAvg)+' s（壓力建立／止膠延遲參考）</td></tr>';
+  h+='<tr><td>雷諾數 Re</td><td><b style="font-size:14px">'+(o.Re<0.01?o.Re.toExponential(2):f3(o.Re))+'</b></td><td>'+(o.Re<2000?'層流（&lt; 2,000），Hagen–Poiseuille 適用':'非層流，公式不適用，請降壓或改用機台實測')+'</td></tr>';
+  h+='<tr><td>L/ID 長徑比</td><td><b style="font-size:14px">'+f3(L/ID)+'</b></td><td>'+(L/ID>=20?'≥ 20，入口效應可忽略':'&lt; 20，入口損失占比上升，建議 Cd 取偏低並實測校正')+'</td></tr></tbody></table>';
+  // 敏感度表
+  const base=o.QmL;
+  const row=(lab,Q,note)=>'<tr><td>'+lab+'</td><td>'+f3(Q)+' mL/s</td><td>×'+(Q/base).toFixed(2)+'</td><td>'+(note||'')+'</td></tr>';
+  h+='<div class="sec">敏感度分析（單一變數改變，其餘維持目前條件）</div>';
+  h+='<table><thead><tr><th>變更</th><th>修正流量 Q</th><th>倍率</th><th>說明</th></tr></thead><tbody>';
+  const specs=NEEDLE_SPECS.map(n=>({g:n.g,id:parseFloat(n.id)})).sort((a,b)=>a.id-b.id);
+  const bigger=specs.find(n=>n.id>ID+1e-6), smaller=specs.slice().reverse().find(n=>n.id<ID-1e-6);
+  if(bigger)h+=row('針頭放大一號 → '+bigger.g+'（ID '+bigger.id+'）',calcFlow(bigger.id,L,dP,mu,t,cd).QmL,'Q ∝ ID⁴');
+  if(smaller)h+=row('針頭縮小一號 → '+smaller.g+'（ID '+smaller.id+'）',calcFlow(smaller.id,L,dP,mu,t,cd).QmL,'Q ∝ ID⁴');
+  h+=row('ΔP +1 bar → '+(dP+1).toFixed(1)+' bar',calcFlow(ID,L,dP+1,mu,t,cd).QmL,'Q ∝ ΔP（線性）');
+  if(dP-1>0)h+=row('ΔP −1 bar → '+(dP-1).toFixed(1)+' bar',calcFlow(ID,L,dP-1,mu,t,cd).QmL,'Q ∝ ΔP（線性）');
+  h+=row('黏度 ×2 → '+fmt(mu*2)+' cps',calcFlow(ID,L,dP,mu*2,t,cd).QmL,'Q ∝ 1/μ');
+  h+=row('加熱降黏 ÷5 → '+fmt(Math.round(mu/5))+' cps',calcFlow(ID,L,dP,mu/5,t,cd).QmL,'Q ∝ 1/μ（常溫 20–25°C → 加熱）');
+  [6.35,12.7,25.4].filter(x=>Math.abs(x-L)>0.01).forEach(x=>h+=row('針長 → '+x+' mm',calcFlow(ID,x,dP,mu,t,cd).QmL,'Q ∝ 1/L'));
+  h+='</tbody></table>';
+  $("#calc-out").hidden=false;$("#calc-out").innerHTML=h;
+  window._lastQ=o.QmL;
+});
+$("#btn-speed").addEventListener("click",()=>{
+  const Q=window._lastQ;
+  const w=+$("#s-w").value,hh=+$("#s-h").value,k=+$("#s-k").value,vmax=+$("#s-vmax").value;
+  let h="";
+  if(!Q){h=warnBox("orange","請先於左側計算理論流量 Q。")}
+  else{
+    const area=w*hh*k; // mm2 -> mL/s = mm3/s /1000
+    const v=(Q*1000)/area; // mm/s
+    h='所需塗佈速度 = <b>'+v.toPrecision(3)+' mm/s</b>（膠線截面 '+area.toPrecision(3)+' mm²，修正流量 Q = '+Q.toPrecision(3)+' mL/s，已含 Cd）';
+    if(v>vmax)h+=warnBox("red","【強制高風險】所需速度 > 機台最大速度 "+vmax+" mm/s：不可行，重新選型或多頭。");
+    else h+=warnBox("green","速度可行（≤ 機台最大速度 "+vmax+" mm/s）。含 CCD 補正時間仍需滿足 CT。");
+  }
+  $("#speed-out").hidden=false;$("#speed-out").innerHTML=h;
+});
+
+// ================= DFA v3（簡化直覺版） =================
+function lvBadge(lv){const m={"強制":"b-red","強烈建議":"b-orange","條件":"b-orange","建議":"b-gray"};return '<span class="badge '+(m[lv]||"b-gray")+'">'+lv+'</span>'}
+const GLUE_TRIG={
+ "UV 膠":["UV 膠時","透明膠 AOI 不適用"],
+ "Epoxy":["熱固化時","AB 膠時"],
+ "PUR 熱熔":["熱固化時"],
+ "CA 瞬間膠":["透明膠 AOI 不適用"],
+ "厭氧膠":["厭氧膠時"],
+ "Silicone 矽膠":["透明膠 AOI 不適用"],
+ "RTV 矽膠":["透明膠 AOI 不適用"],
+ "導熱膠 TIM":["含填料時"],
+ "銀膠":["含填料時"],
+ "錫膏":["含填料時"],
+ "Primer / Activator":[],
+ "底填膠 Underfill":["熱固化時","透明膠 AOI 不適用"]
+};
+const DFA_CAT_ORDER=["接合","基材","可及","定位","製程","設備","安全","檢測","量產"];
+let dfaOnlyOpen=false;
+function dfaState(){return JSON.parse(localStorage.getItem("eqe-dfa-v3")||'{"glue":"","project":"","flags":{},"items":{}}')}
+function dfaSave(st){localStorage.setItem("eqe-dfa-v3",JSON.stringify(st))}
+function dfaApplicable(d,st){
+  const t=d.trig,kw=GLUE_TRIG[st.glue]||[];
+  if(t==="—")return true;
+  if(t==="含填料時")return !!(FAMILIES.find(x=>x.name===st.glue)||{flags:{}}).flags.filler;
+  const famObj=FAMILIES.find(x=>x.name===st.glue)||{flags:{},hs:{}};
+  if(t==="HS 強制")return (famObj.hs||{}).lv==="強制";
+  if(t==="HS 評估")return ["條件","建議"].includes((famObj.hs||{}).lv);
+  if(t==="易燃溶劑")return !!(famObj.flags||{}).flammable;
+  return kw.includes(t);
+}
+function dfaIsGate(d){return d.lv==="強制"||d.lv==="條件"}
+function dfaCalc(st){
+  const app=DFA_ITEMS.map((d,i)=>({d,i})).filter(o=>dfaApplicable(o.d,st));
+  const gate=app.filter(o=>dfaIsGate(o.d));
+  const issues=app.filter(o=>(st.items[o.i]||{}).s==="issue");
+  const gateOpen=gate.filter(o=>!st.items[o.i]||st.items[o.i].s===undefined);
+  const gateIssue=gate.filter(o=>(st.items[o.i]||{}).s==="issue");
+  const done=app.filter(o=>st.items[o.i]&&st.items[o.i].s).length;
+  let code="pending";
+  if(!st.glue)code="noglue";else if(gateIssue.length)code="ng";else if(gateOpen.length)code="pending";else code="pass";
+  return {app,gate,issues,gateOpen,gateIssue,done,code};
+}
+function renderDfa(){
+  const st=dfaState();
+  $("#dfa-glue").value=st.glue||"";
+  const c=dfaCalc(st);
+  const box=$("#dfa-gate-box");box.className="dfa-gate "+(c.code==="pass"?"pass":c.code==="ng"?"ng":"pending");
+  const msg={
+    noglue:["請先選膠材","選擇膠材後自動產生適用檢核項目。"],
+    ng:["退回修改",c.gateIssue.length+" 項強制／條件項待確認："+c.gateIssue.map(o=>o.d.name).join("、")],
+    pending:["尚有 "+c.gateOpen.length+" 項未判定","強制／條件項全部通過後即可設計凍結。"+(c.issues.length?"另有 "+c.issues.length+" 項建議項待處理。":"")],
+    pass:["可設計凍結","所有強制／條件項已通過。"+(c.issues.length?"建議項待處理："+c.issues.map(o=>o.d.name).join("、")+"。":"可進入平台／膠閥／針頭選型。")]
+  }[c.code];
+  box.innerHTML='<div class="g-title">'+msg[0]+'</div><div class="g-sub">'+esc(msg[1])+'</div>';
+  $("#dfa-progress-text").textContent=c.done+" / "+c.app.length;
+  $("#dfa-progress").style.width=(c.app.length?c.done/c.app.length*100:0)+"%";
+  $("#btn-dfa-open").classList.toggle("btn-primary",dfaOnlyOpen);$("#btn-dfa-open").classList.toggle("btn-ghost",!dfaOnlyOpen);
+  if(!st.glue){$("#dfa-list").innerHTML='<div class="empty">選擇膠材後顯示檢核項目。</div>';return}
+  let list=c.app.slice().sort((a,b)=>DFA_CAT_ORDER.indexOf(a.d.cat)-DFA_CAT_ORDER.indexOf(b.d.cat)||(dfaIsGate(b.d)-dfaIsGate(a.d)));
+  if(dfaOnlyOpen)list=list.filter(o=>!(st.items[o.i]||{}).s||(st.items[o.i]||{}).s==="issue");
+  let h="",cat="";
+  list.forEach(({d,i})=>{
+    const it=st.items[i]||{};
+    if(d.cat!==cat){cat=d.cat;h+='<div class="dfa-cat">'+esc(cat)+'</div>'}
+    h+='<div class="dfa-row'+(dfaIsGate(d)?'':' soft')+'" data-i="'+i+'" data-state="'+(it.s||"")+'"><div class="r-main"><div class="r-name">'+lvBadge(d.lv)+esc(d.name)+'</div><div class="r-basis">'+esc(d.basis)+'</div>'
+      +(it.s==="issue"?'<input class="dfa-fix" type="text" value="'+esc(it.fix||"")+'" placeholder="待確認原因／對策（選填）">':'')
+      +'</div><div class="r-act">'
+      +'<button data-v="pass" class="'+(it.s==="pass"?"on":"")+'">通過</button><button data-v="issue" class="'+(it.s==="issue"?"on":"")+'">待確認</button><button data-v="na" class="'+(it.s==="na"?"on":"")+'">不適用</button></div></div>';
+  });
+  if(!list.length)h='<div class="empty">所有項目已確認。</div>';
+  $("#dfa-list").innerHTML=h;
+}
+$("#dfa-glue").addEventListener("change",e=>{const st=dfaState();st.glue=e.target.value;dfaSave(st);renderDfa()});
+$("#dfa-list").addEventListener("click",e=>{const b=e.target.closest(".r-act button");if(!b)return;const i=b.closest(".dfa-row").dataset.i,st=dfaState();st.items[i]=st.items[i]||{};st.items[i].s=(st.items[i].s===b.dataset.v?undefined:b.dataset.v);dfaSave(st);renderDfa()});
+$("#dfa-list").addEventListener("change",e=>{if(!e.target.classList.contains("dfa-fix"))return;const i=e.target.closest(".dfa-row").dataset.i,st=dfaState();st.items[i]=st.items[i]||{};st.items[i].fix=e.target.value;dfaSave(st)});
+$("#btn-dfa-open").addEventListener("click",()=>{dfaOnlyOpen=!dfaOnlyOpen;renderDfa()});
+$("#btn-dfa-print").addEventListener("click",()=>window.print());
+$("#btn-dfa-clear").addEventListener("click",()=>{if(!confirm("清除全部 DFA 確認紀錄？"))return;localStorage.removeItem("eqe-dfa-v3");dfaOnlyOpen=false;renderDfa()});
+FAMILIES.forEach(f=>{const o=document.createElement("option");o.value=f.name;o.textContent=f.name;$("#dfa-glue").appendChild(o)});
+renderDfa();
+
+// URL 參數：?demo=N 套用第 N 組預設；?tab=db 切換頁籤
+(function(){
+  const qp=new URLSearchParams(location.search);
+  if(qp.get("tab"))$$('.tab-btn').forEach(b=>{if(b.dataset.tab===qp.get("tab"))b.click()});
+  })();
+</script>
+</body>
+</html>
