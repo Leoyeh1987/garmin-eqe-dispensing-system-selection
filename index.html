@@ -79,7 +79,7 @@ select:focus,input:focus{outline:2px solid var(--ink);outline-offset:0;border-co
 .warn-blue{background:var(--soft);color:#444;border-color:var(--line)}
 
 /* ===== 指標卡 ===== */
-.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
 .metric{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .m-label{font-size:12px;color:var(--text2);letter-spacing:1px;margin-bottom:4px}
 .m-value{font-size:22px;font-weight:700;line-height:1.25}
@@ -111,6 +111,9 @@ tr:hover td{background:var(--soft)}
 .db-nav button.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
 .search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .search-row input{flex:1;min-width:220px}
+.db-result-group{margin-top:16px}
+.db-result-group:first-child{margin-top:0}
+.db-result-group h3{font-size:15px;margin:0 0 8px;color:var(--text)}
 
 /* ===== 其他 ===== */
 .kv{font-size:13px;color:var(--text2)}
@@ -190,7 +193,7 @@ tr:hover td{background:var(--soft)}
   .card{border:none;box-shadow:none;padding:8px 0}
   .select-layout{display:block}
   .side{position:static}
-  .metrics{grid-template-columns:repeat(4,1fr)}
+  .metrics{grid-template-columns:repeat(3,1fr)}
 }
 </style>
 </head>
@@ -200,7 +203,7 @@ tr:hover td{background:var(--soft)}
     <div class="brand-row"><span class="brand">GARMIN EQE</span></div>
     <div class="title-row">
       <div class="title-block">
-        <h1>點膠選型系統<span class="ver">v1.0</span></h1>
+        <h1>點膠選型系統<span class="ver">v1.1</span></h1>
         <p class="subtitle">膠閥 × 針頭 × 供料系統 快速選型。</p>
       </div>
       <nav class="tabs" id="tabs">
@@ -241,7 +244,7 @@ tr:hover td{background:var(--soft)}
         <input type="number" id="inp-visc" min="1" placeholder="例：50000">
       </div>
       <div class="field">
-        <label>出膠壓力 <span class="sub">bar（選填，用於滴漏風險判定）</span></label>
+        <label>出膠壓力 <span class="sub">bar（選填，用於滴漏檢查）</span></label>
         <input type="number" id="inp-pressure" min="0" step="0.1" placeholder="例：3">
       </div>
       <div class="field">
@@ -288,10 +291,10 @@ tr:hover td{background:var(--soft)}
 <section class="panel" id="panel-db">
   <div class="card">
     <h2>點膠知識資料庫</h2>
-    <p class="hint">依心智圖完整收錄 <span id="db-total"></span> 個資料庫。可用關鍵字即時篩選。</p>
+    <p class="hint">依心智圖完整收錄 <span id="db-total"></span> 個資料庫。輸入關鍵字後會搜尋全部資料庫並顯示符合項目。</p>
     <div class="db-nav" id="db-nav"></div>
     <div class="search-row">
-      <input type="text" id="db-search" placeholder="搜尋此資料庫（名稱、黏度、材質、規範…）">
+      <input type="text" id="db-search" placeholder="搜尋全部資料庫（名稱、黏度、材質、規範…）">
       <span class="pill-count" id="db-count" style="align-self:center"></span>
     </div>
     <div class="table-scroll" id="db-table"></div>
@@ -400,7 +403,7 @@ const FAMILIES = [
  {name:"Primer / Activator", visc:[1,5000], rule:"噴霧閥；易燃防爆評估", needleLimit:"不走針頭；噴霧閥", hood:"強制：氣罩評估＋局部抽氣", hs:{lv:"強制", hazard:"溶劑型（丙酮／庚烷／MEK 等列管有機溶劑），易燃、噴霧形成高濃度蒸氣", control:"發生源設氣罩＋局部抽氣（包圍型 ≥0.4 m/s）；防爆設備、接地、儲存量管制"}, flags:{sprayOnly:true, flammable:true}},
  {name:"RTV 矽膠", visc:[1000,100000], rule:"電子件選脫醇型", needleLimit:"—", hood:"條件：依 SDS 評估", hs:{lv:"條件", hazard:"脫醇型釋放甲醇（第二種有機溶劑）；脫醋酸型釋放醋酸；視配方而定", control:"依 SDS 比對；脫醇型大量作業需局部抽氣；固化區通風"}, flags:{}},
  {name:"厭氧膠", visc:[50,5000], rule:"隔膜閥＋PP；接合面須含活性金屬才會固化", needleLimit:"禁金屬流道；PP 針頭", hood:"條件：依 SDS 評估", hs:{lv:"條件", hazard:"甲基丙烯酸酯單體，皮膚／呼吸道刺激與致敏", control:"依 SDS 評估；大量或加熱作業設局部抽氣；個人安全防護具（手套／護目）"}, flags:{noMetal:true}},
- {name:"CA 瞬間膠", visc:[1,5000], rule:"隔膜閥＋PP／PTFE 流道", needleLimit:"禁金屬（30 秒內固化）；PP／PTFE", hood:"強制：氣罩評估＋局部抽氣", hs:{lv:"強制", hazard:"氰基丙烯酸酯單體蒸氣強刺激（眼／呼吸道）；清洗用丙酮／硝甲烷屬列管溶劑", control:"點膠與清洗工位設局部抽氣；溫濕度控制降低白化；溶劑儲存管制"}, flags:{noMetal:true}},
+ {name:"CA 瞬間膠", visc:[1,5000], rule:"時間／壓力膠筒直接出膠；有止膠需求再用相容隔膜閥；本工具排除氣動／壓電噴射", needleLimit:"禁金屬（30 秒內固化）；PP／PTFE", hood:"強制：氣罩評估＋局部抽氣", hs:{lv:"強制", hazard:"氰基丙烯酸酯單體蒸氣強刺激（眼／呼吸道）；清洗用丙酮／硝甲烷屬列管溶劑", control:"點膠與清洗工位設局部抽氣；溫濕度控制降低白化；溶劑儲存管制"}, flags:{noMetal:true}},
  {name:"銀膠", visc:[5000,200000], rule:"使用前均勻攪拌；ID ≥ d50×10", needleLimit:"ID ≥ d50×10", hood:"建議評估", hs:{lv:"建議", hazard:"低揮發；溶劑型配方例外", control:"一般通風；溶劑型依 SDS 加評"}, flags:{filler:true}},
  {name:"錫膏", visc:[30000,200000], rule:"冷藏回溫 SOP；螺桿閥＋大 ID", needleLimit:"排除隔膜閥；大 ID／XTW 針", hood:"強制：氣罩評估＋局部抽氣", hs:{lv:"強制", hazard:"助焊劑揮發物（松香／醇類）；含鉛料屬特化物質", control:"回焊／加熱發生源設氣罩＋局部抽氣；含鉛料作業環境監測"}, flags:{filler:true, noDiaphragm:true}},
  {name:"PUR 熱熔", visc:[1000,30000], rule:"全金屬針頭＋加熱閥；防潮管理", needleLimit:"禁塑膠；強制全金屬針頭＋加熱閥", hood:"強制：氣罩評估＋局部抽氣", hs:{lv:"強制", hazard:"加熱釋放異氰酸酯（MDI，特化物質）蒸氣，呼吸道致敏", control:"加熱閥／膠槽發生源設氣罩＋局部抽氣；定期作業環境監測"}, flags:{heatedPath:true}},
@@ -408,7 +411,7 @@ const FAMILIES = [
  {name:"Epoxy", visc:[500,300000], rule:"單液：冷藏回溫 SOP、爐溫曲線與工件耐溫檢討｜雙液：Pot life 與 CT／停機策略匹配、雙液計量架構、混合度驗證", needleLimit:"雙液注意混合管相容性（靜態混合管）", hood:"條件：依 SDS 評估", hs:{lv:"條件", hazard:"胺類硬化劑致敏（雙液）；加熱固化釋放少量揮發物", control:"依 SDS 評估；大量灌封或加熱固化設局部抽氣；個人安全防護具（NBR 手套）"}, flags:{}}
 ];
 const VALVES = [
- {name:"時間壓力式", tol:[10,15], group:"低～中黏度", window:[1,50000], contact:"接觸式", precision:["一般"], materials:["UV 膠","Epoxy","RTV 矽膠"], note:"無恆溫有膠量漂移風險；止膠／滴膠風險"},
+ {name:"時間壓力式", tol:[10,15], group:"低～中黏度", window:[1,50000], contact:"接觸式", precision:["一般"], materials:["UV 膠","Epoxy","RTV 矽膠","CA 瞬間膠"], note:"CA 可用時間／壓力控制；需相容膠筒與 PP／PTFE 針頭；一般膠材仍須校正止膠／滴膠", noMetalSafe:true},
  {name:"AB 雙液氣壓推桿", tol:[5,10], group:"低～中黏度", window:[1000,50000], contact:"接觸式", precision:["一般"], materials:["Epoxy"], note:"僅限彈夾 Cartridge 包材（注意 AB 比例及混合管接頭 Type）；混合比容差驗證；止膠／滴膠風險", abOnly:true},
  {name:"PUR 加熱閥", tol:[5,10], group:"低～中黏度", window:[1000,20000], contact:"接觸式", precision:["一般"], materials:["PUR 熱熔"], note:"110–140°C；防潮供料／加熱防護", purOnly:true},
  {name:"噴霧閥", tol:[15,20], group:"低～中黏度", window:[1,2000], contact:"非接觸式", precision:["低"], materials:["Primer / Activator"], note:"易燃溶劑防爆"},
@@ -568,7 +571,7 @@ const PRESETS = [
  {label:"PUR 膠 → 加熱閥", scenario:"bond", family:"PUR 熱熔", visc:10000, expectValve:["PUR 加熱閥"]},
  {label:"導熱膠 → 螺桿閥", scenario:"tim", family:"導熱膠 TIM", visc:300000, expectValve:["螺桿閥"]},
  {label:"UV 非接觸微點", scenario:"microjet", family:"UV 膠", visc:3000, precision:"micro", contact:"noncontact", expectValve:["壓電噴射閥"]},
- {label:"CA 瞬間膠", scenario:"general", family:"CA 瞬間膠", visc:500, expectValve:["隔膜閥"]},
+ {label:"CA 瞬間膠", scenario:"general", family:"CA 瞬間膠", visc:500, expectValve:["時間壓力式","隔膜閥"]},
  {label:"厭氧膠", scenario:"general", family:"厭氧膠", visc:1000, expectValve:["隔膜閥"], expectNeedle:"PP"},
  {label:"低黏＋高壓（驗證警告）", scenario:"general", family:"UV 膠", visc:500, pressure:3, expectWarn:"滴漏"},
  {label:"錫膏 500k", scenario:"", family:"錫膏", visc:200000, expectValve:["螺桿閥"]}
@@ -661,8 +664,10 @@ function runEngine(input){
     warnings.push({lv:"red",text:"【硬篩排除】黏度 > 500,000 cps：進入專案評估，不給標準答案。"});
   if(effVisc&&effVisc>50000)
     warnings.push({lv:"orange",text:"【中風險】黏度 > 50,000 cps：出膠延遲、拉絲風險，建議加熱降黏或螺桿／柱塞類。"});
-  if(visc&&visc<1000&&input.pressure&&input.pressure>0.5)
-    warnings.push({lv:"red",text:"【高風險】低黏（<1,000 cps）＋高壓（>0.5 bar）：滴漏／飛濺高風險，降壓或改噴射／針閥＋回吸。"});
+  if(visc&&visc<1000&&input.pressure&&input.pressure>0.5){
+    const lowViscAlt=fam&&fam.name==="CA 瞬間膠"?"降壓、縮短流路或改用相容針閥／隔膜閥＋回吸":"降壓或改噴射／針閥＋回吸";
+    warnings.push({lv:"red",text:"【高風險】低黏（<1,000 cps）＋高壓（>0.5 bar）：滴漏／飛濺高風險，"+lowViscAlt+"。"});
+  }
   const twoPart=input.mix==="dual";
   if(twoPart)infos.push("【鐵則】雙劑膠水僅推薦：AB 螺桿閥／AB 混合閥／AB 氣壓推桿，其餘閥型一律排除（反之單劑膠水不得使用 AB 閥體）；且必須搭配靜態混合管（依 Pot life 管制更換）。");
   if(fam&&!twoPart)infos.push("【鐵則】單劑膠水不得使用 AB 閥體（AB 螺桿閥／AB 混合閥／AB 氣壓推桿）；中高黏度定量需求請用單液螺桿閥。");
@@ -677,7 +682,9 @@ function runEngine(input){
     const reasons=[],excl=[];
     // 硬排除
     if(fam){
-      if(flags.noMetal&&!v.noMetalSafe)excl.push("CA／厭氧禁金屬接液 → 僅隔膜閥（PP 流道）");
+      const caJet=fam.name==="CA 瞬間膠"&&["噴射閥（氣動）","壓電噴射閥"].includes(v.name);
+      if(caJet)excl.push("CA 膠清潔與維護困難，不納入本工具推薦");
+      else if(flags.noMetal&&!v.noMetalSafe)excl.push("CA／厭氧禁金屬接液 → 此閥型未標示 PP／PTFE 等相容非金屬流路");
       if(flags.heatedPath&&!v.purOnly)excl.push("PUR 需全程加熱路徑 → 僅 PUR 加熱閥");
       if(!flags.heatedPath&&v.purOnly)excl.push("PUR 加熱閥僅限 PUR");
       if(flags.sprayOnly&&v.name!=="噴霧閥")excl.push("Primer／Activator 走噴霧閥");
@@ -727,13 +734,11 @@ function runEngine(input){
 // ================= 結果渲染 =================
 function warnBox(lv,text){const cls={red:"warn-red",orange:"warn-orange",blue:"warn-blue",green:"warn-green"}[lv];const dc={red:"d-red",orange:"d-orange",blue:"d-gray",green:"d-green"}[lv];return '<div class="warn-box '+cls+'"><span class="dot '+dc+'"></span><span>'+esc(text)+'</span></div>'}
 function renderResult(r){
-  const risk=r.warnings.some(w=>w.lv==="red")?{t:"NG",c:"d-red"}:r.warnings.length?{t:"Warning",c:"d-orange"}:{t:"OK",c:"d-green"};
   const best=r.passed.length?r.passed[0].valve.name:"—";
   const mc='<div class="metrics">'
     +'<div class="metric"><div class="m-label">候選閥型</div><div class="m-value">'+r.passed.length+'</div></div>'
     +'<div class="metric"><div class="m-label">最佳閥型</div><div class="m-value m-sm">'+esc(best)+'</div></div>'
     +'<div class="metric"><div class="m-label">有效黏度</div><div class="m-value">'+(r.effVisc?fmt(Math.round(r.effVisc))+' cps':'—')+'</div></div>'
-    +'<div class="metric"><div class="m-label">風險判定</div><div class="m-value m-status"><span class="dot '+risk.c+'"></span>'+risk.t+'</div></div>'
     +'</div>';
   let h=mc+'<div class="card"><h2>推薦結果（Top 5）</h2>';
   const cond=[];
@@ -838,12 +843,28 @@ function badgeFor(text){
 }
 function renderDbTable(){
   const q=($("#db-search").value||"").trim().toLowerCase();
-  const rows=curDb.rows.filter(r=>!q||r.join(" ").toLowerCase().includes(q));
-  let h='<table><thead><tr>'+curDb.cols.map(c=>'<th>'+esc(c)+'</th>').join("")+'</tr></thead><tbody>';
-  if(!rows.length)h+='<tr><td colspan="'+curDb.cols.length+'"><div class="empty">無符合「'+esc(q)+'」的資料</div></td></tr>';
-  rows.forEach(r=>{h+='<tr>'+r.map((c,i)=>'<td>'+((curDb.key==="risk"&&i===0)||(curDb.key==="dfa"&&i===1)?badgeFor(c):esc(c))+'</td>').join("")+'</tr>'});
-  h+='</tbody></table>';
-  $("#db-table").innerHTML=h;
+  const renderRows=(db,rows)=>{
+    let h='<table><thead><tr>'+db.cols.map(c=>'<th>'+esc(c)+'</th>').join("")+'</tr></thead><tbody>';
+    if(!rows.length)h+='<tr><td colspan="'+db.cols.length+'"><div class="empty">無符合「'+esc(q)+'」的資料</div></td></tr>';
+    rows.forEach(r=>{h+='<tr>'+r.map((c,i)=>'<td>'+((db.key==="risk"&&i===0)||(db.key==="dfa"&&i===1)?badgeFor(c):esc(c))+'</td>').join("")+'</tr>'});
+    h+='</tbody></table>';
+    return h;
+  };
+  if(q){
+    let total=0, h="";
+    DBS.forEach(db=>{
+      const rows=db.rows.filter(r=>r.join(" ").toLowerCase().includes(q));
+      if(!rows.length)return;
+      total+=rows.length;
+      h+='<section class="db-result-group"><h3>'+esc(db.label)+'</h3>'+renderRows(db,rows)+'</section>';
+    });
+    $("#db-table").innerHTML=h||'<div class="empty">全部資料庫無符合「'+esc(q)+'」的資料</div>';
+    const allRows=DBS.reduce((n,db)=>n+db.rows.length,0);
+    $("#db-count").textContent=total+" / 全部資料庫 "+allRows+" 筆";
+    return;
+  }
+  const rows=curDb.rows;
+  $("#db-table").innerHTML=renderRows(curDb,rows);
   $("#db-count").textContent=rows.length+" / "+curDb.rows.length+" 筆";
 }
 $("#db-search").addEventListener("input",renderDbTable);
